@@ -22,7 +22,7 @@ from gui.Scaleform.locale.RES_ICONS import RES_ICONS
 from gui.event_boards.settings import isGroupMinimized, expandGroup
 from gui.impl import backport
 from gui.impl.gen.resources import R
-from gui.server_events import settings
+from gui.server_events import settings, events_helpers
 from gui.server_events.awards_formatters import AWARDS_SIZES
 from gui.server_events.cond_formatters.tokens import TokensMarathonFormatter
 from gui.server_events.event_items import DEFAULTS_GROUPS
@@ -284,6 +284,8 @@ class QuestsGroupsBuilder(GroupedEventsBlocksBuilder):
         return [_MotiveQuestsBlockInfo(), _UngroupedQuestsBlockInfo()]
 
     def _createGroupedEventsBlock(self, group):
+        if events_helpers.isMapsTraining(group.getID()):
+            return _MapsTrainingGroupedQuestsBlockInfo(group)
         return _GroupedQuestsBlockInfo(group)
 
     def _getEventsGroups(self):
@@ -923,3 +925,11 @@ class _PremiumGroupedQuestsBlockInfo(_GroupedQuestsBlockInfo):
                 _logger.exception('Invalid formatting string %r to delta of time %r', timeFmt, parts)
 
         return ''
+
+
+class _MapsTrainingGroupedQuestsBlockInfo(_GroupedQuestsBlockInfo):
+
+    def _getDescrBlock(self):
+        descriptionBlockInfo = super(_MapsTrainingGroupedQuestsBlockInfo, self)._getDescrBlock()
+        descriptionBlockInfo['period'] = ''
+        return descriptionBlockInfo
