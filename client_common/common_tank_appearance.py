@@ -3,6 +3,7 @@ import math
 import random
 import logging
 import BigWorld
+import CGF
 import GenericComponents
 import Triggers
 import Math
@@ -161,6 +162,7 @@ class CommonTankAppearance(ScriptGameObject):
         self.__renderMode = None
         self.__frameTimestamp = 0
         self.__periodicTimerID = None
+        self.undamagedStateChildren = []
         return
 
     def prerequisites(self, typeDescriptor, vID, health, isCrewActive, isTurretDetached, outfitCD, renderMode = None):
@@ -507,6 +509,10 @@ class CommonTankAppearance(ScriptGameObject):
             self.__periodicTimerID = None
         self.__modelAnimators = []
         self.filter.enableLagDetection(False)
+        for go in self.undamagedStateChildren:
+            CGF.removeGameObject(go)
+
+        self.undamagedStateChildren = []
         return
 
     def _onRequestModelsRefresh(self):
