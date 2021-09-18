@@ -153,6 +153,7 @@ class VEHICLE_TAGS(CONST_CONTAINER):
     RENT_PROMOTION = 'rent_promotion'
     EARN_CRYSTALS = 'earn_crystals'
     MAPS_TRAINING = 'maps_training'
+    CLAN_WARS_BATTLES = 'clanWarsBattles'
 
 
 NOT_FULL_AMMO_MULTIPLIER = 0.2
@@ -1340,6 +1341,10 @@ class Vehicle(FittingItem):
     @property
     def isOnlyForMapsTrainingBattles(self):
         return checkForTags(self.tags, VEHICLE_TAGS.MAPS_TRAINING)
+
+    @property
+    def isOnlyForClanWarsBattles(self):
+        return checkForTags(self.tags, VEHICLE_TAGS.CLAN_WARS_BATTLES)
 
     @property
     def isTelecom(self):
