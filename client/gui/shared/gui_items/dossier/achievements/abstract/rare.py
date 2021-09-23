@@ -30,6 +30,9 @@ class RareAchievement(RegularAchievement):
     def getUserDescription(self):
         return self.rareAchievesCache.getDescription(self._rareID)
 
+    def getIconName(self):
+        return 'actionUnknown'
+
     @classmethod
     def checkIsInDossier(cls, block, rareID, dossier):
         if dossier is not None:
@@ -83,9 +86,6 @@ class RareAchievement(RegularAchievement):
         if memBigImgID is not None:
             icons[self.ICON_TYPE.IT_180X180] = 'img://%s' % str(memBigImgID)
         return icons
-
-    def _getIconName(self):
-        return 'actionUnknown'
 
     def __repr__(self):
         return '%s<rareID=%s; value=%s>' % (self.__class__.__name__, str(self._rareID), str(self._value))

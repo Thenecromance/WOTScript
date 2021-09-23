@@ -1,7 +1,6 @@
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/battle_royale/select_respawn.py
 import logging
 import time
-import weakref
 from frameworks.wulf import ViewFlags
 from gui.battle_control.battle_constants import COUNTDOWN_STATE
 from gui.battle_control.controllers.period_ctrl import IAbstractPeriodView
@@ -35,9 +34,9 @@ class SelectRespawnComponent(InjectComponentAdaptor, ISpawnListener):
         self.__view = None
         return
 
-    def setSpawnPoints(self, points):
+    def setSpawnPoints(self, points, pointId = None):
         if self.__view:
-            self.__view.setPoints(points)
+            self.__view.setPoints(points, pointId)
 
     def updateCloseTime(self, timeLeft, state):
         if self.__view:
@@ -89,19 +88,18 @@ class SelectRespawnView(ViewImpl):
         self.__closeTime = 0
         self.__points = []
         self.__pointsById = {}
-        self.__timer = BRPrebattleTimer(weakref.proxy(self))
 
     @property
     def viewModel(self):
         return super(SelectRespawnView, self).getViewModel()
 
     def updateCloseTime(self, timeLeft, state):
-        self.__timer.updateCloseTime(timeLeft, state)
+        pass
 
     def dispose(self):
         pass
 
-    def setPoints(self, points):
+    def setPoints(self, points, selectedPointId = None):
         with self.viewModel.transaction() as vm:
             vmPoints = vm.getPoints()
             vmPoints.clear()
@@ -112,6 +110,7 @@ class SelectRespawnView(ViewImpl):
                 pointVM.setPointID(pointId)
                 pointVM.setCoordX(coordX)
                 pointVM.setCoordY(coordY)
+                pointVM.setSelected(pointId == selectedPointId)
                 vmPoints.addViewModel(pointVM)
 
             vmPoints.invalidate()
@@ -140,6 +139,7 @@ class SelectRespawnView(ViewImpl):
         super(SelectRespawnView, self)._initialize()
         self.viewModel.onCompleteBtnClick += self.__onCompleteBtnClick
         self.viewModel.onSelectPoint += self.__onSelectPoint
+        self.viewModel.onCloseBtnClick += self.__onCloseBtnClick
         with self.viewModel.transaction() as vm:
             vm.setMapSize(abs(self.__mapSize))
             vm.setMinimapBG(self.__mapTexture)
@@ -153,14 +153,14 @@ class SelectRespawnView(ViewImpl):
         super(SelectRespawnView, self)._finalize()
         self.viewModel.onCompleteBtnClick -= self.__onCompleteBtnClick
         self.viewModel.onSelectPoint -= self.__onSelectPoint
+        self.viewModel.onCloseBtnClick -= self.__onCloseBtnClick
 
     def __getBgByGeometryName(self, geometry):
         if geometry == '250_br_battle_city2-1':
             return R.images.gui.maps.icons.battleRoyale.spawnBg.c_250_br_battle_city2_1()
-        elif geometry == '251_br_battle_city3':
+        if geometry == '251_br_battle_city3':
             return R.images.gui.maps.icons.battleRoyale.spawnBg.c_251_br_battle_city3()
-        else:
-            return None
+        return R.images.gui.maps.icons.battleRoyale.spawnBg.c_251_br_battle_city3()
 
     def __onSelectPoint(self):
         spawnCtrl = self.__sessionProvider.dynamic.spawn
@@ -172,3 +172,9 @@ class SelectRespawnView(ViewImpl):
         spawnCtrl = self.__sessionProvider.dynamic.spawn
         if spawnCtrl:
             spawnCtrl.placeVehicle()
+
+    def __onCloseBtnClick(self):
+        spawnCtrl = self.__sessionProvider.dynamic.spawn
+        if spawnCtrl is not None:
+            spawnCtrl.closeSpawnPoints()
+        return

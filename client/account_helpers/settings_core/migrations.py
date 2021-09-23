@@ -1,7 +1,7 @@
 # Embedded file name: scripts/client/account_helpers/settings_core/migrations.py
 import BigWorld
 import constants
-from account_helpers.settings_core.settings_constants import GAME, CONTROLS, VERSION, DAMAGE_INDICATOR, DAMAGE_LOG, BATTLE_EVENTS, SESSION_STATS, BattlePassStorageKeys, BattleCommStorageKeys, OnceOnlyHints, ScorePanelStorageKeys, SPGAim, GuiSettingsBehavior
+from account_helpers.settings_core.settings_constants import GAME, CONTROLS, VERSION, DAMAGE_INDICATOR, DAMAGE_LOG, BATTLE_EVENTS, SESSION_STATS, BattlePassStorageKeys, BattleCommStorageKeys, OnceOnlyHints, ScorePanelStorageKeys, SPGAim, GuiSettingsBehavior, WTEventStorageKeys
 from adisp import process, async
 from debug_utils import LOG_DEBUG
 from gui.server_events.pm_constants import PM_TUTOR_FIELDS
@@ -668,6 +668,11 @@ def _migrateTo79(core, data, initialized):
     data['guiStartBehavior']['birthdayCalendarIntroShowed'] = False
 
 
+def _migrateTo80(core, data, initialized):
+    data['eventStorage'][WTEventStorageKeys.WT_INTRO_SHOWN] = False
+    data['delete'].extend((91,))
+
+
 _versions = ((1,
   _initializeDefaultSettings,
   True,
@@ -978,6 +983,10 @@ _versions = ((1,
   False),
  (79,
   _migrateTo79,
+  False,
+  False),
+ (80,
+  _migrateTo80,
   False,
   False))
 

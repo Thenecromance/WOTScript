@@ -8,7 +8,7 @@ import logging
 import constants
 import post_progression_common
 from Event import Event
-from constants import IS_TUTORIAL_ENABLED, PremiumConfigs, DAILY_QUESTS_CONFIG, ClansConfig, MAGNETIC_AUTO_AIM_CONFIG, Configs, DOG_TAGS_CONFIG, BATTLE_NOTIFIER_CONFIG, MISC_GUI_SETTINGS
+from constants import IS_TUTORIAL_ENABLED, PremiumConfigs, DAILY_QUESTS_CONFIG, ClansConfig, MAGNETIC_AUTO_AIM_CONFIG, Configs, DOG_TAGS_CONFIG, BATTLE_NOTIFIER_CONFIG, MISC_GUI_SETTINGS, PREM_BONUS_TYPES, PREMIUM_ENTITLEMENTS, ENTITLEMENT_TO_PREM_TYPE, POSTBATTLE20_CONFIG
 from helpers import time_utils
 from ranked_common import SwitchState
 from collector_vehicle import CollectorVehicleConsts
@@ -778,6 +778,42 @@ class _BirthdayCalendarConfig(namedtuple('_BirthdayCalendarConfig', ('enabled', 
         return self._replace(**dataToUpdate)
 
 
+class _EventBattlesConfig(namedtuple('_EventBattlesConfig', ('isEnabled',
+ 'peripheryIDs',
+ 'primeTimes',
+ 'seasons',
+ 'cycleTimes',
+ 'progression',
+ 'exchange',
+ 'hunterCollectionToken',
+ 'bossCollectionToken',
+ 'eventCollectionToken',
+ 'ticketToken',
+ 'quickBossTicketToken',
+ 'quickHunterTicketToken',
+ 'ticketsToDraw',
+ 'lootBoxDailyPurchaseLimit',
+ 'lootBoxCounterEntitlementID'))):
+    __slots__ = ()
+
+    def __new__(cls, **kwargs):
+        defaults = dict(isEnabled=False, peripheryIDs={}, primeTimes={}, seasons={}, cycleTimes={}, progression=[], exchange={}, hunterCollectionToken='', bossCollectionToken='', eventCollectionToken='', ticketToken='', quickBossTicketToken='', quickHunterTicketToken='', ticketsToDraw=0, lootBoxDailyPurchaseLimit=0, lootBoxCounterEntitlementID='')
+        defaults.update(kwargs)
+        return super(_EventBattlesConfig, cls).__new__(cls, **defaults)
+
+    def asDict(self):
+        return self._asdict()
+
+    def replace(self, data):
+        allowedFields = self._fields
+        dataToUpdate = dict(((k, v) for k, v in data.iteritems() if k in allowedFields))
+        return self._replace(**dataToUpdate)
+
+    @classmethod
+    def defaults(cls):
+        return cls()
+
+
 class ServerSettings(object):
 
     def __init__(self, serverSettings):
@@ -810,6 +846,7 @@ class ServerSettings(object):
         self.__blueprintsConvertSaleConfig = _BlueprintsConvertSaleConfig()
         self.__bwProductCatalog = _BwProductCatalog()
         self.__vehiclePostProgressionConfig = VehiclePostProgressionConfig()
+        self.__eventBattlesConfig = _EventBattlesConfig()
         self.set(serverSettings)
 
     def set(self, serverSettings):
@@ -904,6 +941,10 @@ class ServerSettings(object):
             self.__bwProductCatalog = makeTupleByDict(_BwProductCatalog, self.__serverSettings['productsCatalog'])
         if post_progression_common.SERVER_SETTINGS_KEY in self.__serverSettings:
             self.__vehiclePostProgressionConfig = makeTupleByDict(VehiclePostProgressionConfig, self.__serverSettings[post_progression_common.SERVER_SETTINGS_KEY])
+        if 'event_battles_config' in self.__serverSettings:
+            self.__eventBattlesConfig = makeTupleByDict(_EventBattlesConfig, self.__serverSettings['event_battles_config'])
+        else:
+            self.__eventBattlesConfig = _EventBattlesConfig.defaults()
         self.onServerSettingsChange(serverSettings)
 
     def update(self, serverSettingsDiff):
@@ -929,6 +970,8 @@ class ServerSettings(object):
         if 'epic_config' in serverSettingsDiff:
             self.__updateEpic(serverSettingsDiff)
             self.__serverSettings['epic_config'] = serverSettingsDiff['epic_config']
+        if 'event_battles_config' in serverSettingsDiff:
+            self.__updateEventBattles(serverSettingsDiff)
         if Configs.BATTLE_ROYALE_CONFIG.value in serverSettingsDiff:
             self.__updateBattleRoyale(serverSettingsDiff)
         if Configs.MAPBOX_CONFIG.value in serverSettingsDiff:
@@ -964,6 +1007,8 @@ class ServerSettings(object):
             self.__updateSquadBonus(serverSettingsDiff)
         if PremiumConfigs.PREFERRED_MAPS in serverSettingsDiff:
             self.__serverSettings[PremiumConfigs.PREFERRED_MAPS] = serverSettingsDiff[PremiumConfigs.PREFERRED_MAPS]
+        if POSTBATTLE20_CONFIG in serverSettingsDiff:
+            self.__serverSettings[POSTBATTLE20_CONFIG] = serverSettingsDiff[POSTBATTLE20_CONFIG]
         if BATTLE_PASS_CONFIG_NAME in serverSettingsDiff:
             self.__serverSettings[BATTLE_PASS_CONFIG_NAME] = serverSettingsDiff[BATTLE_PASS_CONFIG_NAME]
             self.__battlePassConfig = BattlePassConfig(self.__serverSettings.get(BATTLE_PASS_CONFIG_NAME, {}))
@@ -1050,6 +1095,10 @@ class ServerSettings(object):
     @property
     def epicBattles(self):
         return self.__epicGameSettings
+
+    @property
+    def eventBattlesConfig(self):
+        return self.__eventBattlesConfig
 
     @property
     def battleRoyale(self):
@@ -1191,6 +1240,9 @@ class ServerSettings(object):
     def getPremQuestsConfig(self):
         return self.__getGlobalSetting(PremiumConfigs.PREM_QUESTS, {})
 
+    def isPostbattle20Enabled(self):
+        return self.__getGlobalSetting(POSTBATTLE20_CONFIG, {}).get('enabled', True)
+
     def getDailyQuestConfig(self):
         return self.__getGlobalSetting(DAILY_QUESTS_CONFIG, {})
 
@@ -1229,6 +1281,18 @@ class ServerSettings(object):
 
     def getPreferredMapsConfig(self):
         return self.__getGlobalSetting(PremiumConfigs.PREFERRED_MAPS, {})
+
+    def getPremiumPlusXPBonus(self):
+        battleBonuses = self.__getGlobalSetting('prem_battle_bonuses', {})
+        return battleBonuses.get(PREM_BONUS_TYPES.XP, {}).get(ENTITLEMENT_TO_PREM_TYPE[PREMIUM_ENTITLEMENTS.PLUS], 0)
+
+    def getPremiumPlusCreditsBonus(self):
+        battleBonuses = self.__getGlobalSetting('prem_battle_bonuses', {})
+        return battleBonuses.get(PREM_BONUS_TYPES.CREDITS, {}).get(ENTITLEMENT_TO_PREM_TYPE[PREMIUM_ENTITLEMENTS.PLUS], 0)
+
+    def getPremiumPlusTmenXPBonus(self):
+        battleBonuses = self.__getGlobalSetting('prem_battle_bonuses', {})
+        return battleBonuses.get(PREM_BONUS_TYPES.TMEN_XP, {}).get(ENTITLEMENT_TO_PREM_TYPE[PREMIUM_ENTITLEMENTS.PLUS], 0)
 
     def isEpicRandomEnabled(self):
         return self.__getGlobalSetting('isEpicRandomEnabled', False)
@@ -1428,6 +1492,9 @@ class ServerSettings(object):
 
     def __updateVehiclePostProgressionConfig(self, serverSettingsDiff):
         self.__vehiclePostProgressionConfig = self.__vehiclePostProgressionConfig.replace(serverSettingsDiff[post_progression_common.SERVER_SETTINGS_KEY])
+
+    def __updateEventBattles(self, targetSettings):
+        self.__eventBattlesConfig = self.__eventBattlesConfig.replace(targetSettings['event_battles_config'])
 
 
 def serverSettingsChangeListener(*configKeys):
