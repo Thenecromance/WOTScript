@@ -39,9 +39,6 @@ class HintBase(object):
     def update(self):
         return None
 
-    def onAction(self, actionId, actionParams):
-        pass
-
     @property
     def message(self):
         return self.__message

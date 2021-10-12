@@ -58,8 +58,6 @@ ORDERS_FILTER = 'ORDERS_FILTER'
 CURRENT_VEHICLE = 'current'
 ROYALE_VEHICLE = 'ROYALE_VEHICLE'
 BOOTCAMP_VEHICLE = 'BOOTCAMP_VEHICLE'
-EVENT_VEHICLE = 'EVENT_VEHICLE'
-EVENT_SAVED_VEHICLE = 'EVENT_SAVED_VEHICLE'
 LOBBY_MENU_TRIGGER_SHOWN = 'lobby_menu_trigger_shown'
 MANUAL_NEW_CONTENT = 'manual_new_content'
 GUI_START_BEHAVIOR = 'GUI_START_BEHAVIOR'
@@ -168,7 +166,6 @@ RANKED_YEAR_POSITION = 'rankedYearPosition'
 BATTLE_ROYALE_HANGAR_BOTTOM_PANEL_VIEWED = 'battleRoyaleHangarBottomPanelViewed'
 MARATHON_REWARD_WAS_SHOWN_PREFIX = 'marathonRewardScreenWasShown'
 MARATHON_VIDEO_WAS_SHOWN_PREFIX = 'marathonRewardVideoWasShown'
-MARATHON_INTRO_WAS_SHOWN_PREFIX = 'marathonIntroWasShown'
 SUBTITLES = 'subtitles'
 TECHTREE_INTRO_BLUEPRINTS = 'techTreeIntroBlueprints'
 MODULES_ANIMATION_SHOWN = 'collectibleVehiclesAnimWasShown'
@@ -181,16 +178,17 @@ QUEST_DELTAS_PROGRESS = 'questProgress'
 QUEST_DELTAS_TOKENS_PROGRESS = 'tokensProgress'
 TOP_OF_TREE_CONFIG = 'topOfTree'
 DOG_TAGS = 'dogTags'
+WOT_PLUS = 'wotPlus'
 LAST_ARTY_CTRL_MODE = 'lastArtyCtrlMode'
 ACTIVE_TEST_PARTICIPATION_CONFIRMED = 'activeTestParticipateConfirmed'
 MAPBOX_PROGRESSION = 'mapbox_progression'
 UNLOCK_VEHICLES_IN_BATTLE_HINTS = 'unlockVehiclesInBattleHints'
 BECOME_ELITE_VEHICLES_WATCHED = 'becomeEliteWatched'
+VPP_ENTRY_POINT_LAST_SEEN_STEP = 'vehiclePostProgressionLastSeenStep'
 CLAN_PREBATTLE_SORTING_KEY = 'ClanPrebattleSortingKey'
-EVENT_LAST_COLLECTION_SEEN = 'eventLastCollectionSeen'
-LOOTBOXES_SEEN = 'lootboxesSeen'
-EVENT_LAST_ITEMS_SEEN = 'wtEventLastItemsSeen'
 KNOWN_SELECTOR_BATTLES = 'knownSelectorBattles'
+MODE_SELECTOR_BATTLE_PASS_SHOWN = 'modeSelectorBattlePassShown'
+RANKED_LAST_CYCLE_ID = 'rankedLastCycleID'
 DEFAULT_VALUES = {KEY_FILTERS: {STORE_TAB: 0,
                'shop_current': (-1, STORE_CONSTANTS.VEHICLE, False),
                'scroll_to_item': None,
@@ -511,8 +509,7 @@ DEFAULT_VALUES = {KEY_FILTERS: {STORE_TAB: 0,
                                     'techTreeIntroBlueprintsReceived': False,
                                     'techTreeIntroShowed': False,
                                     'isDisplayPlatoonMembersClicked': False,
-                                    GuiSettingsBehavior.VEH_POST_PROGRESSION_UNLOCK_MSG_NEED_SHOW: True,
-                                    'birthdayCalendarIntroShowed': False},
+                                    GuiSettingsBehavior.VEH_POST_PROGRESSION_UNLOCK_MSG_NEED_SHOW: True},
                EULA_VERSION: {'version': 0},
                LINKEDSET_QUESTS: {'shown': 0},
                FORT_MEMBER_TUTORIAL: {'wasShown': False},
@@ -563,8 +560,6 @@ DEFAULT_VALUES = {KEY_FILTERS: {STORE_TAB: 0,
  KEY_FAVORITES: {BOOTCAMP_VEHICLE: 0,
                  CURRENT_VEHICLE: 0,
                  ROYALE_VEHICLE: 0,
-                 EVENT_VEHICLE: 0,
-                 EVENT_SAVED_VEHICLE: None,
                  FALLOUT_VEHICLES: {}},
  KEY_MANUAL: {LOBBY_MENU_TRIGGER_SHOWN: False,
               MANUAL_NEW_CONTENT: {}},
@@ -722,6 +717,13 @@ DEFAULT_VALUES = {KEY_FILTERS: {STORE_TAB: 0,
                 DOG_TAGS: {'lastVisitedDogTagsTabIdx': None,
                            'onboardingEnabled': True,
                            'seenComps': set()},
+                WOT_PLUS: {'isWotPlusEnabled': False,
+                           'isEntryPointsEnabled': False,
+                           'isGoldReserveEnabled': True,
+                           'isPassiveXpEnabled': True,
+                           'isTankRentalEnabled': True,
+                           'isFreeDirectivesEnabled': True,
+                           'rentPendingVehCD': None},
                 CUSTOMIZATION_SECTION: {CAROUSEL_ARROWS_HINT_SHOWN_FIELD: False,
                                         PROJECTION_DECAL_HINT_SHOWN_FIELD: False},
                 SESSION_STATS_SECTION: {BATTLE_EFFICIENCY_SECTION_EXPANDED_FIELD: False},
@@ -867,14 +869,14 @@ DEFAULT_VALUES = {KEY_FILTERS: {STORE_TAB: 0,
                 RANKED_YEAR_POSITION: None,
                 TOP_OF_TREE_CONFIG: {},
                 BECOME_ELITE_VEHICLES_WATCHED: set(),
-                EVENT_LAST_COLLECTION_SEEN: 0,
-                EVENT_LAST_ITEMS_SEEN: 0,
-                LOOTBOXES_SEEN: 0,
                 GAME.GAMEPLAY_ONLY_10_MODE: False,
                 MAPBOX_PROGRESSION: {'previous_battles_played': 0,
                                      'visited_maps': [],
-                                     'stored_rewards': {}},
-                UNLOCK_VEHICLES_IN_BATTLE_HINTS: 5},
+                                     'stored_rewards': {},
+                                     'lastCycleId': None},
+                UNLOCK_VEHICLES_IN_BATTLE_HINTS: 5,
+                MODE_SELECTOR_BATTLE_PASS_SHOWN: {},
+                RANKED_LAST_CYCLE_ID: None},
  KEY_COUNTERS: {NEW_HOF_COUNTER: {PROFILE_CONSTANTS.HOF_ACHIEVEMENTS_BUTTON: True,
                                   PROFILE_CONSTANTS.HOF_VEHICLES_BUTTON: True,
                                   PROFILE_CONSTANTS.HOF_VIEW_RATING_BUTTON: True},
@@ -889,7 +891,8 @@ DEFAULT_VALUES = {KEY_FILTERS: {STORE_TAB: 0,
                 BOOSTERS_FOR_CREDITS_SLOT_COUNTER: 1,
                 SENIORITY_AWARDS_COUNTER: 1,
                 DEMOUNT_KIT_SEEN: False,
-                NEW_SHOP_TABS: {IS_COLLECTIBLE_VEHICLES_VISITED: False}},
+                NEW_SHOP_TABS: {IS_COLLECTIBLE_VEHICLES_VISITED: False},
+                VPP_ENTRY_POINT_LAST_SEEN_STEP: {}},
  KEY_NOTIFICATIONS: {ELEN_NOTIFICATIONS: {MISSIONS_CONSTANTS.ELEN_EVENT_STARTED_NOTIFICATION: set(),
                                           MISSIONS_CONSTANTS.ELEN_EVENT_FINISHED_NOTIFICATION: set(),
                                           MISSIONS_CONSTANTS.ELEN_EVENT_TAB_VISITED: set()},
@@ -1527,10 +1530,7 @@ class AccountSettings(object):
                         filtersSection.write(filterSection, _pack(updatedFilters))
 
             if currVersion < 48:
-                for key, section in _filterAccountSection(ads):
-                    AccountSettings._readSection(section, KEY_SETTINGS).deleteSection(EVENT_LAST_COLLECTION_SEEN)
-                    AccountSettings._readSection(section, KEY_SETTINGS).deleteSection(EVENT_LAST_ITEMS_SEEN)
-
+                pass
         return
 
     @staticmethod

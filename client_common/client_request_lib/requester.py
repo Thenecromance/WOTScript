@@ -354,10 +354,10 @@ class MapboxAccessor(BaseAccessor):
         return self._data_source.request_authorized_survey_url(callback, mapURL)
 
 
-class ShopAccessor(BaseAccessor):
+class YearHareAffairAccessor(BaseAccessor):
 
-    def get_inventory_entitlements(self, callback, entitlement_codes):
-        return self._data_source.get_inventory_entitlements(callback, entitlement_codes)
+    def get_yha_video(self, callback):
+        return self._data_source.get_yha_video(callback)
 
 
 class Requester(object):
@@ -379,7 +379,7 @@ class Requester(object):
     freya = RequestDescriptor(FreyaAccessor)
     craftmachine = RequestDescriptor(CrafmachineAccessor)
     mapbox = RequestDescriptor(MapboxAccessor)
-    shop = RequestDescriptor(ShopAccessor)
+    yha = RequestDescriptor(YearHareAffairAccessor)
 
     @classmethod
     def create_requester(cls, url_fetcher, config, client_lang = None, user_agent = None):

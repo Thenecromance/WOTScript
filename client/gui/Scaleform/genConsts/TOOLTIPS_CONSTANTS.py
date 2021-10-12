@@ -57,7 +57,6 @@ class TOOLTIPS_CONSTANTS(object):
     AWARD_VEHICLE = 'awardVehicle'
     EXTENDED_AWARD_VEHICLE = 'extendedAwardVehicle'
     SENIORITY_AWARD_VEHICLE = 'seniorityAwardVehicle'
-    WT_PORTAL_VEHICLE = 'portalVehicle'
     DEFAULT_SHELL = 'defaultShell'
     HANGAR_SHELL = 'hangarShell'
     NATION_CHANGE_HANGAR_SHELL = 'nationChangeHangarShell'
@@ -82,7 +81,6 @@ class TOOLTIPS_CONSTANTS(object):
     TANKMAN_NEW_SKILL = 'tankmanNewSkill'
     PREVIEW_CREW_SKILL = 'previewCrewSkill'
     EFFICIENCY_PARAM = 'efficiencyParam'
-    TOTAL_EFFICIENCY_PARAM = 'totalEfficiencyParam'
     MAP = 'map'
     SETTINGS_CONTROL = 'control'
     SETTINGS_BUTTON = 'settingsButton'
@@ -116,7 +114,6 @@ class TOOLTIPS_CONSTANTS(object):
     QUESTS_PREVIEW = 'questsPreview'
     EVENT_QUESTS_PREVIEW = 'EventQuestsPreview'
     PERSONAL_QUESTS_PREVIEW = 'presonalQuestsPreview'
-    EVENT_BATTLES_QUESTS_PREVIEW = 'eventBattlesQuestsReview'
     SHEDULE_QUEST = 'scheduleQuest'
     MISSION_VEHICLE = 'missionVehicle'
     MISSION_VEHICLE_TYPE = 'missionVehicleType'
@@ -198,6 +195,7 @@ class TOOLTIPS_CONSTANTS(object):
     OPERATION_POSTPONED = 'operationPostponed'
     SQUAD_BONUS = 'squadBonus'
     GF_TEST_TOOLTIP = 'gfTestTooltip'
+    WOT_PLUS = 'wotPlus'
     BATTLE_PASS_VEHICLE_POINTS = 'battlePassVehiclePoints'
     BATTLE_PASS_NOT_STARTED = 'battlePassNotStarted'
     BATTLE_PASS_IN_PROGRESS = 'battlePassInProgress'
@@ -211,7 +209,7 @@ class TOOLTIPS_CONSTANTS(object):
     CRYSTAL_INFO_FULL_SCREEN = 'crystalInfoFullScreen'
     CREDITS_INFO_FULL_SCREEN = 'creditsInfoFullScreen'
     GOLD_INFO_FULL_SCREEN = 'goldInfoFullScreen'
-    FREEXP_INFO_FULL_SCREEN = 'freeXpInfoFullScreen'
+    FREEXP_INFO_FULL_SCREEN = 'freeXPInfoFullScreen'
     GOLD_STATS_FULL_SCREEN = 'goldStatsFullScreen'
     CREDITS_STATS_FULL_SCREEN = 'creditsStatsFullScreen'
     CRYSTAL_INFO = 'crystalInfo'
@@ -233,10 +231,8 @@ class TOOLTIPS_CONSTANTS(object):
     RANKED_CALENDAR_DAY_INFO_EXTENDED = 'rankedCalendarDayInfoExtended'
     RANKED_SELECTOR_INFO = 'rankedSelectorInfo'
     RANKED_UNAVAILABLE_INFO = 'rankedUnavailableInfo'
-    RANKED_CALENDAR_STEPS_INFO = 'rankedCalendarStepsInfo'
     RANKED_DIVISION_INFO = 'rankedDivisionInfo'
     RANKED_BATTLES_YEAR_REWARD = 'rankedBattlesYearReward'
-    RANKED_SERVER_PRIMETIME = 'rankedServerPrimeTime'
     VEHICLE_ROLES = 'vehicleRoles'
     RANKED_QUESTS_PREVIEW = 'rankedQuestsPreview'
     EPIC_SKILL_INFO = 'epicSkillInfo'
@@ -257,14 +253,6 @@ class TOOLTIPS_CONSTANTS(object):
     BATTLE_ROYALE_PERF_ADVANCED = 'battleRoyalePerfAdvanced'
     BATTLE_ROYALE_SELECTOR_INFO = 'battleRoyaleSelectorInfo'
     BATTLE_ROYALE_WIDGET_INFO = 'battleRoyaleWidgetInfo'
-    EVENT_BATTLES_SELECTOR_INFO = 'eventBattlesSelectorInfo'
-    EVENT_BATTLES_SERVER_PRIMETIME = 'eventBattlesServerPrimeTime'
-    EVENT_BATTLES_CALENDAR = 'eventBattlesCalendar'
-    EVENT_BATTLES_TICKET = 'eventBattlesTicket'
-    EVENT_CAROUSEL_VEHICLE = 'eventCarouselVehicle'
-    EVENT_LOOTBOX = 'eventLootbox'
-    EVENT_BUY_LOOTBOX = 'eventBuyLootbox'
-    EVENT_VEHICLE_COMPENSATION = 'eventVehicleCompensation'
     BLUEPRINT_INFO = 'blueprintInfo'
     BLUEPRINT_CONVERT_INFO = 'blueprintConvertInfo'
     BLUEPRINT_FRAGMENT_INFO = 'blueprintFragmentInfo'
@@ -374,8 +362,8 @@ class TOOLTIPS_CONSTANTS(object):
     SELECTABLE_CREWBOOK = 'SelectableCrewbookTooltipData'
     RANDOM_CREWBOOK = 'RandomCrewbookTooltipData'
     ACCOUNT_COMPLETION = 'AccountCompletion'
-    EPIC_RANK_UNLOCK_INFO = 'epicRankUnlockTooltip'
     VEH_POST_PROGRESSION_ENTRY_POINT = 'VehPostProgressionEntryPoint'
+    EPIC_RANK_UNLOCK_INFO = 'epicRankUnlockTooltip'
     ACHIEVEMENTS_SET = [BATTLE_STATS_ACHIEVS,
      BATTLE_STATS_MARKS_ON_GUN_ACHIEVEMENT,
      ACHIEVEMENT,
@@ -399,7 +387,8 @@ class TOOLTIPS_CONSTANTS(object):
      SHOP_BOOSTER,
      BOOSTERS_QUESTS,
      NATION_CHANGE_BATTLE_BOOSTER]
-    COMMON_SET = [IGR_INFO,
+    COMMON_SET = [EFFICIENCY_PARAM,
+     IGR_INFO,
      CONTACT,
      SORTIE_DIVISION,
      MAP,
@@ -437,7 +426,8 @@ class TOOLTIPS_CONSTANTS(object):
      CREDITS_INFO_FULL_SCREEN,
      GOLD_INFO_FULL_SCREEN,
      FREEXP_INFO_FULL_SCREEN,
-     VEH_POST_PROGRESSION_ENTRY_POINT]
+     VEH_POST_PROGRESSION_ENTRY_POINT,
+     WOT_PLUS]
     BOOTCAMP_SET = [BOOTCAMP_AWARD_MEDAL, BOOTCAMP_REWARD_PROGRESS, BOOTCAMP_LESSON_PROGRESS]
     CUSTOMIZATION_SET = [TECH_CUSTOMIZATION_ITEM,
      TECH_CUSTOMIZATION_NONHISTORIC_ITEM,
@@ -504,12 +494,10 @@ class TOOLTIPS_CONSTANTS(object):
      RANKED_STEP,
      RANKED_CALENDAR_DAY_INFO,
      RANKED_CALENDAR_DAY_INFO_EXTENDED,
-     RANKED_CALENDAR_STEPS_INFO,
      RANKED_SELECTOR_INFO,
      RANKED_UNAVAILABLE_INFO,
      RANKED_DIVISION_INFO,
      RANKED_BATTLES_YEAR_REWARD,
-     RANKED_SERVER_PRIMETIME,
      RANKED_QUESTS_PREVIEW]
     SETTINGS_SET = [SETTINGS_CONTROL,
      SETTINGS_BUTTON,
@@ -552,8 +540,7 @@ class TOOLTIPS_CONSTANTS(object):
      TECHTREE_VEHICLE_STATUS,
      VEHICLE_TANK_SETUP_PARAMETERS,
      VEHICLE_POST_PROGRESSION_PARAMETERS,
-     VEHICLE_ROLES,
-     WT_PORTAL_VEHICLE]
+     VEHICLE_ROLES]
     BLUEPRINTS_SET = [BLUEPRINT_INFO,
      BLUEPRINT_FRAGMENT_INFO,
      BLUEPRINT_EMPTY_SLOT_INFO,
@@ -630,13 +617,4 @@ class TOOLTIPS_CONSTANTS(object):
      RANDOM_CREWBOOK,
      MAPBOX_CALENDAR]
     ACCOUNT_COMPLETION_SET = [ACCOUNT_COMPLETION]
-    EFFICIENCY_SET = [EFFICIENCY_PARAM, TOTAL_EFFICIENCY_PARAM]
     REFERRAL_PROGRAM_SET = [REFERRAL_AWARDS]
-    EVENT_BATTLES_SET = [EVENT_BATTLES_SELECTOR_INFO,
-     EVENT_BATTLES_SERVER_PRIMETIME,
-     EVENT_BATTLES_CALENDAR,
-     EVENT_LOOTBOX,
-     EVENT_BATTLES_QUESTS_PREVIEW,
-     EVENT_BATTLES_TICKET,
-     EVENT_CAROUSEL_VEHICLE,
-     EVENT_BUY_LOOTBOX]

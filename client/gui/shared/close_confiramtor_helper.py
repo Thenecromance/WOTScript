@@ -57,6 +57,12 @@ class CloseConfirmatorsHelper(object):
 
         return
 
+    def _addPlatoonCreationConfirmator(self):
+        self._lobbyContext.addPlatoonCreationConfirmator(self.__confirmPlatoonCreation)
+
+    def _deletePlatoonCreationConfirmator(self):
+        self._lobbyContext.deletePlatoonCreationConfirmator(self.__confirmPlatoonCreation)
+
     @adisp.async
     @async
     def __confirmEvent(self, event, callback):
@@ -79,5 +85,11 @@ class CloseConfirmatorsHelper(object):
     @adisp.async
     @async
     def __confirmHeaderNavigation(self, callback):
+        result = yield await(self.__closeConfirmator())
+        callback(result)
+
+    @adisp.async
+    @async
+    def __confirmPlatoonCreation(self, callback):
         result = yield await(self.__closeConfirmator())
         callback(result)

@@ -1,4 +1,5 @@
 # Embedded file name: scripts/client/gui/DialogsInterface.py
+from constants import ACCOUNT_KICK_REASONS
 from gui.Scaleform.Waiting import Waiting
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.shared import events, g_eventBus, EVENT_BUS_SCOPE
@@ -56,7 +57,7 @@ def showI18nCheckBoxDialog(i18nKey, callback, meta = None, focusedID = None):
 
 __ifDisconnectDialogShown = False
 
-def showDisconnect(reason = None, isBan = False, expiryTime = None):
+def showDisconnect(reason = None, kickReasonType = ACCOUNT_KICK_REASONS.UNKNOWN, expiryTime = None):
     global __ifDisconnectDialogShown
     if __ifDisconnectDialogShown:
         return
@@ -67,4 +68,4 @@ def showDisconnect(reason = None, isBan = False, expiryTime = None):
         __ifDisconnectDialogShown = False
 
     __ifDisconnectDialogShown = True
-    showDialog(DisconnectMeta(reason, isBan, expiryTime), callback)
+    showDialog(DisconnectMeta(reason, kickReasonType, expiryTime), callback)

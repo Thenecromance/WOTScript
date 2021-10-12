@@ -15,6 +15,9 @@ class TankCarouselMeta(CarouselEnvironment):
     def buyRentPromotion(self, intCD):
         self._printOverrideError('buyRentPromotion')
 
+    def selectWotPlusVehicle(self, intCD):
+        self._printOverrideError('selectWotPlusVehicle')
+
     def setFilter(self, id):
         self._printOverrideError('setFilter')
 

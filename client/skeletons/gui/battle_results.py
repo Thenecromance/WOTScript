@@ -29,10 +29,6 @@ class IBattleResultsService(object):
     def getResultsVO(self, arenaUniqueID):
         raise NotImplementedError
 
-    @property
-    def presenter(self):
-        raise NotImplementedError
-
     def popResultsAnimation(self, arenaUniqueID):
         raise NotImplementedError
 
@@ -49,9 +45,6 @@ class IBattleResultsService(object):
         raise NotImplementedError
 
     def getAdditionalXPValue(self, arenaUniqueID):
-        raise NotImplementedError
-
-    def canApplyAdditionalXPBonus(self, arenaBonusType):
         raise NotImplementedError
 
     def isCrewSameForArena(self, arenaUniqueID):

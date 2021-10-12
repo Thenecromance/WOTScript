@@ -98,11 +98,6 @@ def getTillTimeByResource(seconds, resource, useRoundUp = False, removeLeadingZe
     return time_utils.getTillTimeString(seconds, isRoundUp=useRoundUp, sourceStrGenerator=stringGen, removeLeadingZeros=removeLeadingZeros)
 
 
-def getShortFormatDate(date):
-    timeStamp = time_utils.makeLocalServerTime(date)
-    return backport.getShortDateFormat(timeStamp)
-
-
 class RentLeftFormatter(object):
 
     def __init__(self, rentInfo, isIGR = False):

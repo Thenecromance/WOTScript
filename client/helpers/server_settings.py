@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 import logging
 import constants
 import post_progression_common
+import year_hare_affair_common
 from Event import Event
-from constants import IS_TUTORIAL_ENABLED, PremiumConfigs, DAILY_QUESTS_CONFIG, ClansConfig, MAGNETIC_AUTO_AIM_CONFIG, Configs, DOG_TAGS_CONFIG, BATTLE_NOTIFIER_CONFIG, MISC_GUI_SETTINGS, PREM_BONUS_TYPES, PREMIUM_ENTITLEMENTS, ENTITLEMENT_TO_PREM_TYPE, POSTBATTLE20_CONFIG
+from constants import IS_TUTORIAL_ENABLED, PremiumConfigs, DAILY_QUESTS_CONFIG, ClansConfig, MAGNETIC_AUTO_AIM_CONFIG, Configs, DOG_TAGS_CONFIG, BATTLE_NOTIFIER_CONFIG, MISC_GUI_SETTINGS, RENEWABLE_SUBSCRIPTION_CONFIG
 from helpers import time_utils
 from ranked_common import SwitchState
 from collector_vehicle import CollectorVehicleConsts
@@ -19,6 +20,7 @@ from gui.SystemMessages import SM_TYPE
 from gui.Scaleform.locale.SYSTEM_MESSAGES import SYSTEM_MESSAGES
 from gui.shared.utils.decorators import ReprInjector
 from personal_missions import PM_BRANCH
+from renewable_subscription_common.settings_constants import GOLD_RESERVE_GAINS_SECTION
 from post_progression_common import FEATURE_BY_GROUP_ID, ROLESLOT_FEATURE
 from shared_utils import makeTupleByDict, updateDict
 from UnitBase import PREBATTLE_TYPE_TO_UNIT_ASSEMBLER, UNIT_ASSEMBLER_IMPL_TO_CONFIG
@@ -262,7 +264,7 @@ class _BwHallOfFame(namedtuple('_BwHallOfFame', ('hofHostUrl', 'isHofEnabled', '
         return cls()
 
 
-class _BwShop(namedtuple('_BwShop', ('hostUrl', 'backendHostUrl', 'isStorageEnabled'))):
+class _BwShop(namedtuple('_BwShop', ('hostUrl', 'isStorageEnabled'))):
 
     def replace(self, data):
         allowedFields = self._fields
@@ -764,54 +766,22 @@ class VehiclePostProgressionConfig(namedtuple('_VehiclePostProgression', ('isPos
         return self._replace(**dataToUpdate)
 
 
-class _BirthdayCalendarConfig(namedtuple('_BirthdayCalendarConfig', ('enabled', 'calendarURL', 'calendarIntroUrl'))):
+class YearHareAffairConfig(namedtuple('_YearHareAffair', ('isEnabled', 'url'))):
     __slots__ = ()
 
     def __new__(cls, **kwargs):
-        defaults = dict(enabled=False, calendarURL='', calendarIntroUrl='')
+        defaults = dict(isEnabled=False, url=None)
         defaults.update(kwargs)
-        return super(_BirthdayCalendarConfig, cls).__new__(cls, **defaults)
-
-    def replace(self, data):
-        allowedFields = self._fields
-        dataToUpdate = dict(((k, v) for k, v in data.iteritems() if k in allowedFields))
-        return self._replace(**dataToUpdate)
-
-
-class _EventBattlesConfig(namedtuple('_EventBattlesConfig', ('isEnabled',
- 'peripheryIDs',
- 'primeTimes',
- 'seasons',
- 'cycleTimes',
- 'progression',
- 'exchange',
- 'hunterCollectionToken',
- 'bossCollectionToken',
- 'eventCollectionToken',
- 'ticketToken',
- 'quickBossTicketToken',
- 'quickHunterTicketToken',
- 'ticketsToDraw',
- 'lootBoxDailyPurchaseLimit',
- 'lootBoxCounterEntitlementID'))):
-    __slots__ = ()
-
-    def __new__(cls, **kwargs):
-        defaults = dict(isEnabled=False, peripheryIDs={}, primeTimes={}, seasons={}, cycleTimes={}, progression=[], exchange={}, hunterCollectionToken='', bossCollectionToken='', eventCollectionToken='', ticketToken='', quickBossTicketToken='', quickHunterTicketToken='', ticketsToDraw=0, lootBoxDailyPurchaseLimit=0, lootBoxCounterEntitlementID='')
-        defaults.update(kwargs)
-        return super(_EventBattlesConfig, cls).__new__(cls, **defaults)
-
-    def asDict(self):
-        return self._asdict()
-
-    def replace(self, data):
-        allowedFields = self._fields
-        dataToUpdate = dict(((k, v) for k, v in data.iteritems() if k in allowedFields))
-        return self._replace(**dataToUpdate)
+        return super(YearHareAffairConfig, cls).__new__(cls, **defaults)
 
     @classmethod
     def defaults(cls):
-        return cls()
+        return cls(False, None)
+
+    def replace(self, data):
+        allowedFields = self._fields
+        dataToUpdate = dict(((k, v) for k, v in data.iteritems() if k in allowedFields))
+        return self._replace(**dataToUpdate)
 
 
 class ServerSettings(object):
@@ -835,7 +805,6 @@ class ServerSettings(object):
         self.__rankedBattlesSettings = RankedBattlesConfig.defaults()
         self.__epicMetaGameSettings = _EpicMetaGameConfig()
         self.__adventCalendar = _AdventCalendarConfig()
-        self.__birthdayCalendar = _BirthdayCalendarConfig()
         self.__epicGameSettings = EpicGameConfig()
         self.__unitAssemblerConfig = _UnitAssemblerConfig.defaults()
         self.__telecomConfig = _TelecomConfig.defaults()
@@ -846,7 +815,7 @@ class ServerSettings(object):
         self.__blueprintsConvertSaleConfig = _BlueprintsConvertSaleConfig()
         self.__bwProductCatalog = _BwProductCatalog()
         self.__vehiclePostProgressionConfig = VehiclePostProgressionConfig()
-        self.__eventBattlesConfig = _EventBattlesConfig()
+        self.__yearHareAffairConfig = YearHareAffairConfig()
         self.set(serverSettings)
 
     def set(self, serverSettings):
@@ -879,7 +848,7 @@ class ServerSettings(object):
             self.__tournamentSettings = _TournamentSettings(settings.get('tmsHostUrl', ''))
         if 'frontlineSettings' in self.__serverSettings:
             settings = self.__serverSettings['frontlineSettings']
-            self.__frontlineSettings = _FrontlineSettings(settings.get('isEpicTrainingEnabled', False))
+            self.__frontlineSettings = _FrontlineSettings(settings.get('isEpicTrainingEnabled', True))
         if 'hallOfFame' in self.__serverSettings:
             self.__bwHallOfFame = makeTupleByDict(_BwHallOfFame, self.__serverSettings['hallOfFame'])
         if 'shop' in self.__serverSettings:
@@ -888,8 +857,6 @@ class ServerSettings(object):
             self.__rankedBattlesSettings = makeTupleByDict(RankedBattlesConfig, self.__serverSettings['ranked_config'])
         if 'advent_calendar_config' in self.__serverSettings:
             self.__adventCalendar = makeTupleByDict(_AdventCalendarConfig, self.__serverSettings['advent_calendar_config'])
-        if 'bday_calendar_config' in self.__serverSettings:
-            self.__birthdayCalendar = makeTupleByDict(_BirthdayCalendarConfig, self.__serverSettings['bday_calendar_config'])
         if 'epic_config' in self.__serverSettings:
             LOG_DEBUG('epic_config', self.__serverSettings['epic_config'])
             self.__epicMetaGameSettings = makeTupleByDict(_EpicMetaGameConfig, self.__serverSettings['epic_config']['epicMetaGame'])
@@ -941,10 +908,8 @@ class ServerSettings(object):
             self.__bwProductCatalog = makeTupleByDict(_BwProductCatalog, self.__serverSettings['productsCatalog'])
         if post_progression_common.SERVER_SETTINGS_KEY in self.__serverSettings:
             self.__vehiclePostProgressionConfig = makeTupleByDict(VehiclePostProgressionConfig, self.__serverSettings[post_progression_common.SERVER_SETTINGS_KEY])
-        if 'event_battles_config' in self.__serverSettings:
-            self.__eventBattlesConfig = makeTupleByDict(_EventBattlesConfig, self.__serverSettings['event_battles_config'])
-        else:
-            self.__eventBattlesConfig = _EventBattlesConfig.defaults()
+        if year_hare_affair_common.SERVER_SETTINGS_KEY in self.__serverSettings:
+            self.__yearHareAffairConfig = makeTupleByDict(YearHareAffairConfig, self.__serverSettings[year_hare_affair_common.SERVER_SETTINGS_KEY])
         self.onServerSettingsChange(serverSettings)
 
     def update(self, serverSettingsDiff):
@@ -964,14 +929,9 @@ class ServerSettings(object):
         if 'advent_calendar_config' in serverSettingsDiff:
             self.__updateAdventCalendar(serverSettingsDiff)
             self.__serverSettings['advent_calendar_config'] = serverSettingsDiff['advent_calendar_config']
-        if 'bday_calendar_config' in serverSettingsDiff:
-            self.__updateBirthdayCalendar(serverSettingsDiff)
-            self.__serverSettings['bday_calendar_config'] = serverSettingsDiff['bday_calendar_config']
         if 'epic_config' in serverSettingsDiff:
             self.__updateEpic(serverSettingsDiff)
             self.__serverSettings['epic_config'] = serverSettingsDiff['epic_config']
-        if 'event_battles_config' in serverSettingsDiff:
-            self.__updateEventBattles(serverSettingsDiff)
         if Configs.BATTLE_ROYALE_CONFIG.value in serverSettingsDiff:
             self.__updateBattleRoyale(serverSettingsDiff)
         if Configs.MAPBOX_CONFIG.value in serverSettingsDiff:
@@ -1007,8 +967,6 @@ class ServerSettings(object):
             self.__updateSquadBonus(serverSettingsDiff)
         if PremiumConfigs.PREFERRED_MAPS in serverSettingsDiff:
             self.__serverSettings[PremiumConfigs.PREFERRED_MAPS] = serverSettingsDiff[PremiumConfigs.PREFERRED_MAPS]
-        if POSTBATTLE20_CONFIG in serverSettingsDiff:
-            self.__serverSettings[POSTBATTLE20_CONFIG] = serverSettingsDiff[POSTBATTLE20_CONFIG]
         if BATTLE_PASS_CONFIG_NAME in serverSettingsDiff:
             self.__serverSettings[BATTLE_PASS_CONFIG_NAME] = serverSettingsDiff[BATTLE_PASS_CONFIG_NAME]
             self.__battlePassConfig = BattlePassConfig(self.__serverSettings.get(BATTLE_PASS_CONFIG_NAME, {}))
@@ -1018,6 +976,8 @@ class ServerSettings(object):
             self.__crystalRewardsConfig = makeTupleByDict(_crystalRewardsConfig, self.__serverSettings[_crystalRewardsConfig.CONFIG_NAME])
         if post_progression_common.SERVER_SETTINGS_KEY in serverSettingsDiff:
             self.__updateVehiclePostProgressionConfig(serverSettingsDiff)
+        if year_hare_affair_common.SERVER_SETTINGS_KEY in serverSettingsDiff:
+            self.__updateYearHareAffairConfig(serverSettingsDiff)
         self.__updateBlueprintsConvertSaleConfig(serverSettingsDiff)
         self.__updateReactiveCommunicationConfig(serverSettingsDiff)
         self.onServerSettingsChange(serverSettingsDiff)
@@ -1085,20 +1045,12 @@ class ServerSettings(object):
         return self.__adventCalendar
 
     @property
-    def birthdayCalendar(self):
-        return self.__birthdayCalendar
-
-    @property
     def epicMetaGame(self):
         return self.__epicMetaGameSettings
 
     @property
     def epicBattles(self):
         return self.__epicGameSettings
-
-    @property
-    def eventBattlesConfig(self):
-        return self.__eventBattlesConfig
 
     @property
     def battleRoyale(self):
@@ -1127,6 +1079,10 @@ class ServerSettings(object):
     @property
     def vehiclePostProgression(self):
         return self.__vehiclePostProgressionConfig
+
+    @property
+    def yearHareAffair(self):
+        return self.__yearHareAffairConfig
 
     def isEpicBattleEnabled(self):
         return self.epicBattles.isEnabled
@@ -1240,9 +1196,6 @@ class ServerSettings(object):
     def getPremQuestsConfig(self):
         return self.__getGlobalSetting(PremiumConfigs.PREM_QUESTS, {})
 
-    def isPostbattle20Enabled(self):
-        return self.__getGlobalSetting(POSTBATTLE20_CONFIG, {}).get('enabled', True)
-
     def getDailyQuestConfig(self):
         return self.__getGlobalSetting(DAILY_QUESTS_CONFIG, {})
 
@@ -1267,6 +1220,33 @@ class ServerSettings(object):
     def isDogTagComponentUnlockingEnabled(self):
         return self.isDogTagEnabled() and self.__getGlobalSetting(DOG_TAGS_CONFIG, {}).get('enableComponentUnlocking', True)
 
+    def isRenewableSubEnabled(self):
+        return self.__getGlobalSetting(RENEWABLE_SUBSCRIPTION_CONFIG, {}).get('enabled', True)
+
+    def isWotPlusTankRentalEnabled(self):
+        return self.isRenewableSubEnabled() and self.__getGlobalSetting(RENEWABLE_SUBSCRIPTION_CONFIG, {}).get('enableTankRental', True)
+
+    def isRenewableSubGoldReserveEnabled(self):
+        return self.isRenewableSubEnabled() and self.__getGlobalSetting(RENEWABLE_SUBSCRIPTION_CONFIG, {}).get('enableGoldReserve', True)
+
+    def isRenewableSubFreeDirectivesEnabled(self):
+        return self.isRenewableSubEnabled() and self.__getGlobalSetting(RENEWABLE_SUBSCRIPTION_CONFIG, {}).get('enableFreeDirectives', True)
+
+    def isRenewableSubPassiveCrewXPEnabled(self):
+        return self.isRenewableSubEnabled() and self.__getGlobalSetting(RENEWABLE_SUBSCRIPTION_CONFIG, {}).get('enablePassiveCrewXP', True)
+
+    def isWotPlusNewSubscriptionEnabled(self):
+        return self.isRenewableSubEnabled() and self.__getGlobalSetting(RENEWABLE_SUBSCRIPTION_CONFIG, {}).get('enableNewSubscriptions', True)
+
+    def getRenewableSubCrewXPPerMinute(self):
+        return self.__getGlobalSetting(RENEWABLE_SUBSCRIPTION_CONFIG, {}).get('crewXPPerMinute', 0)
+
+    def getRenewableSubMaxGoldReserveCapacity(self):
+        return self.__getGlobalSetting(RENEWABLE_SUBSCRIPTION_CONFIG, {}).get('maxGoldReserveCapacity', 0)
+
+    def getArenaTypesWithGoldReserve(self):
+        return self.__getGlobalSetting(RENEWABLE_SUBSCRIPTION_CONFIG, {}).get(GOLD_RESERVE_GAINS_SECTION, {}).keys()
+
     def isBattleNotifierEnabled(self):
         return self.__getGlobalSetting(BATTLE_NOTIFIER_CONFIG, {}).get('enabled', False)
 
@@ -1281,18 +1261,6 @@ class ServerSettings(object):
 
     def getPreferredMapsConfig(self):
         return self.__getGlobalSetting(PremiumConfigs.PREFERRED_MAPS, {})
-
-    def getPremiumPlusXPBonus(self):
-        battleBonuses = self.__getGlobalSetting('prem_battle_bonuses', {})
-        return battleBonuses.get(PREM_BONUS_TYPES.XP, {}).get(ENTITLEMENT_TO_PREM_TYPE[PREMIUM_ENTITLEMENTS.PLUS], 0)
-
-    def getPremiumPlusCreditsBonus(self):
-        battleBonuses = self.__getGlobalSetting('prem_battle_bonuses', {})
-        return battleBonuses.get(PREM_BONUS_TYPES.CREDITS, {}).get(ENTITLEMENT_TO_PREM_TYPE[PREMIUM_ENTITLEMENTS.PLUS], 0)
-
-    def getPremiumPlusTmenXPBonus(self):
-        battleBonuses = self.__getGlobalSetting('prem_battle_bonuses', {})
-        return battleBonuses.get(PREM_BONUS_TYPES.TMEN_XP, {}).get(ENTITLEMENT_TO_PREM_TYPE[PREMIUM_ENTITLEMENTS.PLUS], 0)
 
     def isEpicRandomEnabled(self):
         return self.__getGlobalSetting('isEpicRandomEnabled', False)
@@ -1384,6 +1352,9 @@ class ServerSettings(object):
     def isTrophyDevicesEnabled(self):
         return self.__getGlobalSetting('isTrophyDevicesEnabled', False)
 
+    def isTrainingBattleEnabled(self):
+        return self.__getGlobalSetting('isTrainingBattleEnabled', True)
+
     def isCollectorVehicleEnabled(self):
         return self.__getGlobalSetting(CollectorVehicleConsts.CONFIG_NAME, {}).get(CollectorVehicleConsts.IS_ENABLED, False)
 
@@ -1434,9 +1405,6 @@ class ServerSettings(object):
 
     def __updateAdventCalendar(self, targetSettings):
         self.__adventCalendar = self.__adventCalendar.replace(targetSettings['advent_calendar_config'])
-
-    def __updateBirthdayCalendar(self, targetSettings):
-        self.__birthdayCalendar = self.__birthdayCalendar.replace(targetSettings['bday_calendar_config'])
 
     def __updateRanked(self, targetSettings):
         self.__rankedBattlesSettings = self.__rankedBattlesSettings.replace(targetSettings['ranked_config'])
@@ -1493,8 +1461,8 @@ class ServerSettings(object):
     def __updateVehiclePostProgressionConfig(self, serverSettingsDiff):
         self.__vehiclePostProgressionConfig = self.__vehiclePostProgressionConfig.replace(serverSettingsDiff[post_progression_common.SERVER_SETTINGS_KEY])
 
-    def __updateEventBattles(self, targetSettings):
-        self.__eventBattlesConfig = self.__eventBattlesConfig.replace(targetSettings['event_battles_config'])
+    def __updateYearHareAffairConfig(self, serverSettingsDiff):
+        self.__yearHareAffairConfig = self.__yearHareAffairConfig.replace(serverSettingsDiff[year_hare_affair_common.SERVER_SETTINGS_KEY])
 
 
 def serverSettingsChangeListener(*configKeys):

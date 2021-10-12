@@ -24,6 +24,7 @@ from gui.Scaleform.genConsts.QUESTS_ALIASES import QUESTS_ALIASES
 from gui.server_events import caches
 from gui.shared.event_dispatcher import showMapboxIntro, showBrowserOverlayView
 from gui.shared.utils import SelectorBattleTypesUtils
+from gui.shared.utils.SelectorBattleTypesUtils import setBattleTypeAsUnknown
 from gui.shared.utils.scheduled_notifications import Notifiable, SimpleNotifier
 from gui.wgcg.mapbox.contexts import MapboxProgressionCtx, MapboxRequestCrewbookCtx, MapboxCompleteSurveyCtx, MapboxRequestAuthorizedURLCtx
 from helpers import dependency, server_settings, time_utils
@@ -34,8 +35,15 @@ from skeletons.gui.web import IWebController
 from skeletons.gui.server_events import IEventsCache
 from skeletons.gui.system_messages import ISystemMessages
 _logger = logging.getLogger(__name__)
-ProgressionData = namedtuple('ProgressionData', ('surveys', 'rewards', 'minRank', 'totalBattles'))
-MapData = namedtuple('MapData', ('progress', 'total', 'passed', 'available', 'url'))
+ProgressionData = namedtuple('ProgressionData', ('surveys',
+ 'rewards',
+ 'minRank',
+ 'totalBattles'))
+MapData = namedtuple('MapData', ('progress',
+ 'total',
+ 'passed',
+ 'available',
+ 'url'))
 RewardData = namedtuple('RewardData', ('bonusList', 'status'))
 
 class MapboxController(Notifiable, SeasonProvider, IMapboxController, IGlobalListener):
@@ -81,14 +89,19 @@ class MapboxController(Notifiable, SeasonProvider, IMapboxController, IGlobalLis
         super(MapboxController, self).fini()
         return
 
+    def onLobbyStarted(self, ctx):
+        super(MapboxController, self).onLobbyStarted(ctx)
+        self.__settingsManager.start()
+        self.storeCycle()
+
     def onLobbyInited(self, event):
         super(MapboxController, self).onLobbyInited(event)
         self.__lobbyContext.getServerSettings().onServerSettingsChange += self.__onServerSettingsChanged
         unitMgr = prb_getters.getClientUnitMgr()
         if unitMgr is not None:
             unitMgr.onUnitJoined += self.__onUnitJoined
-        self.__progressionDataProvider.start()
-        self.__settingsManager.start()
+        if self.isActive():
+            self.__progressionDataProvider.start()
         self.startNotification()
         self.startGlobalListening()
         return
@@ -202,6 +215,9 @@ class MapboxController(Notifiable, SeasonProvider, IMapboxController, IGlobalLis
     def isMapVisited(self, mapName):
         return self.__settingsManager.isMapVisited(mapName)
 
+    def storeCycle(self):
+        self.__settingsManager.storeCycle(self.isActive(), self.getCurrentCycleID())
+
     @async
     def forceUpdateProgressData(self):
         result = yield await(self.__progressionDataProvider.forceUpdateProgressData())
@@ -256,6 +272,12 @@ class MapboxController(Notifiable, SeasonProvider, IMapboxController, IGlobalLis
         return
 
     def __eventAvailabilityUpdate(self):
+        if self.isActive():
+            self.__progressionDataProvider.start()
+        else:
+            self.__progressionDataProvider.stop()
+            if self.isMapboxMode():
+                self.__selectRandomBattle()
         if not self.isActive() and self.isMapboxMode():
             self.__selectRandomBattle()
 
@@ -264,6 +286,7 @@ class MapboxController(Notifiable, SeasonProvider, IMapboxController, IGlobalLis
         self.startNotification()
         self.onUpdated()
         self.__timerUpdate()
+        self.storeCycle()
 
 
 class MapboxProgressionDataProvider(Notifiable):
@@ -271,16 +294,19 @@ class MapboxProgressionDataProvider(Notifiable):
     __lobbyContext = dependency.descriptor(ILobbyContext)
     __mapboxCtrl = dependency.descriptor(IMapboxController)
     __eventsCache = dependency.descriptor(IEventsCache)
-    __slots__ = ('onProgressionDataUpdated', '__progressionData', '__isSyncing', '__isShuttingDown')
+    __slots__ = ('onProgressionDataUpdated', '__progressionData', '__isSyncing', '__isShuttingDown', '__isStarted')
 
     def __init__(self):
         super(MapboxProgressionDataProvider, self).__init__()
-        self.__progressionData = {}
+        self.__progressionData = None
         self.__isSyncing = False
         self.__isShuttingDown = False
+        self.__isStarted = False
         self.onProgressionDataUpdated = Event.Event()
+        return
 
     def init(self):
+        self.__progressionData = {}
         self.addNotificator(SimpleNotifier(self.getTimer, self.__timerUpdate))
 
     def fini(self):
@@ -288,6 +314,8 @@ class MapboxProgressionDataProvider(Notifiable):
             self.__isShuttingDown = True
             return
         else:
+            if self.__isStarted:
+                self.stop()
             self.onProgressionDataUpdated.clear()
             self.onProgressionDataUpdated = None
             self.__progressionData = None
@@ -295,15 +323,18 @@ class MapboxProgressionDataProvider(Notifiable):
             return
 
     def start(self):
-        self.__progressionData = {}
+        if self.__isStarted:
+            return
         self.__lobbyContext.getServerSettings().onServerSettingsChange += self.__onServerSettingsChanged
         self.startNotification()
         self.__request(lambda *args: True)
+        self.__isStarted = True
 
     def stop(self):
         self.__lobbyContext.getServerSettings().onServerSettingsChange -= self.__onServerSettingsChanged
         self.stopNotification()
         self.__progressionData.clear()
+        self.__isStarted = False
 
     def getProgressionData(self):
         if not self.__progressionData:
@@ -397,3 +428,11 @@ class MapboxSettingsManager(object):
 
     def getPrevBattlesPlayed(self):
         return self.__settings.get('previous_battles_played', 0)
+
+    def storeCycle(self, isActive, cycleId):
+        if not isActive or cycleId is None:
+            self.__settings['lastCycleId'] = None
+        elif self.__settings['lastCycleId'] != cycleId:
+            self.__settings['lastCycleId'] = cycleId
+            setBattleTypeAsUnknown(SELECTOR_BATTLE_TYPES.MAPBOX)
+        return

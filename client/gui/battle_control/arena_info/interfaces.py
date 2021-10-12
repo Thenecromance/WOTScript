@@ -5,6 +5,7 @@ from gui.battle_control.controllers.interfaces import IBattleController
 from gui.battle_control.view_components import ViewComponentsController
 if typing.TYPE_CHECKING:
     from items.vehicles import VehicleDescr
+    from gui.shared.gui_items.Vehicle import Vehicle
 
 class IArenaController(IBattleController):
     __slots__ = ('__weakref__',)
@@ -304,7 +305,7 @@ class IRadarController(object):
 
 class ISpawnController(object):
 
-    def showSpawnPoints(self, points, pointGuid = None):
+    def showSpawnPoints(self, points):
         raise NotImplementedError
 
 
@@ -352,6 +353,9 @@ class IPrebattleSetupsController(IArenaPeriodController, IArenaLoadController, V
     def setPostProgression(self, vehicleID, postProgression):
         raise NotImplementedError
 
+    def setDisabledSwitches(self, vehicleID, groupIDs):
+        raise NotImplementedError
+
     def setRespawnReloadFactor(self, vehicleID, reloadFactor):
         raise NotImplementedError
 
@@ -368,19 +372,4 @@ class IPrebattleSetupsController(IArenaPeriodController, IArenaLoadController, V
         raise NotImplementedError
 
     def switchLayout(self, groupID, layoutIdx):
-        raise NotImplementedError
-
-
-class IPlayersPanelController(IArenaVehiclesController, ViewComponentsController):
-
-    def show(self, params):
-        raise NotImplementedError
-
-    def hide(self, params):
-        raise NotImplementedError
-
-    def processReplay(self, params):
-        raise NotImplementedError
-
-    def updateStressTimer(self, timerID):
         raise NotImplementedError

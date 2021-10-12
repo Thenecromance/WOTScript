@@ -27,6 +27,7 @@ class ACHIEVEMENT_BLOCK:
     RATED_7X7 = 'achievementsRated7x7'
     FALLOUT = 'falloutAchievements'
     EPIC_BATTLE = 'epicBattleAchievements'
+    STEAM = 'steamAchievements'
     ALL = (CLIENT,
      TOTAL,
      TEAM_7X7,
@@ -39,7 +40,8 @@ class ACHIEVEMENT_BLOCK:
      RATED_7X7,
      SINGLE_7X7,
      FALLOUT,
-     EPIC_BATTLE)
+     EPIC_BATTLE,
+     STEAM)
 
 
 class ACHIEVEMENT_MODE:
@@ -92,12 +94,9 @@ def makeAchievesStorageName(block):
     return (block, '')
 
 
-MARK_OF_MASTERY = 'markOfMastery'
-MARK_ON_GUN = 'marksOnGun'
-WHITE_TIGER_RECORD = (_AB.CLIENT, 'whiteTiger')
 RARE_STORAGE_RECORD = makeAchievesStorageName(_AB.RARE)
-MARK_OF_MASTERY_RECORD = (_AB.TOTAL, MARK_OF_MASTERY)
-MARK_ON_GUN_RECORD = (_AB.TOTAL, MARK_ON_GUN)
+MARK_OF_MASTERY_RECORD = (_AB.TOTAL, 'markOfMastery')
+MARK_ON_GUN_RECORD = (_AB.TOTAL, 'marksOnGun')
 HONORED_RANK_RECORD = (_AB.CLIENT, 'honoredRank')
 _MODE_CONVERTER = {'random': ACHIEVEMENT_MODE.RANDOM,
  'ranked': ACHIEVEMENT_MODE.RANKED,
