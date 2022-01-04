@@ -1,5 +1,4 @@
 # Embedded file name: scripts/client/gui/shared/money.py
-import typing
 from collections import namedtuple
 from shared_utils import CONST_CONTAINER
 from soft_exception import SoftException
@@ -26,10 +25,19 @@ class Currency(CONST_CONTAINER):
      CRYSTAL: 'crystal',
      EVENT_COIN: 'event_coin',
      BPCOIN: 'bpcoin'}
+    _CURRENCY_INTERNAL_MAP = {external:internal for internal, external in _CURRENCY_EXTERNAL_MAP.iteritems()}
 
     @classmethod
     def currencyExternalName(cls, currencyName):
         return cls._CURRENCY_EXTERNAL_MAP[currencyName]
+
+    @classmethod
+    def currencyInternalName(cls, currencyName):
+        return cls._CURRENCY_INTERNAL_MAP[currencyName]
+
+    @classmethod
+    def convertExternal(cls, **kwargs):
+        return {Currency.currencyInternalName(currency):value for currency, value in kwargs.iteritems()}
 
 
 __Money = namedtuple('_Money', Currency.ALL)
@@ -226,11 +234,7 @@ class Money(object):
 
     @classmethod
     def hasMoney(cls, data):
-        for c in cls.ALL:
-            if c in data:
-                return True
-
-        return False
+        return any((c in cls.ALL for c in data.iterkeys()))
 
     @classmethod
     def extractMoneyDict(cls, data):

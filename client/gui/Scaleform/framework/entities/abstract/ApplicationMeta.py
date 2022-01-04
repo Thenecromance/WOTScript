@@ -100,3 +100,7 @@ class ApplicationMeta(BaseDAAPIComponent):
     def as_unblurBackgroundViewsS(self):
         if self._isDAAPIInited():
             return self.flashObject.as_unblurBackgroundViews()
+
+    def as_setMouseEventsEnabledS(self, enabled):
+        if self._isDAAPIInited():
+            return self.flashObject.as_setMouseEventsEnabled(enabled)

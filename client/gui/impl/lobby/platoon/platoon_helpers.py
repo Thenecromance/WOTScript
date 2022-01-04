@@ -29,6 +29,10 @@ class PreloadableWindow(WindowImpl):
             self.__preload = False
             self.hide()
 
+    def show(self):
+        super(PreloadableWindow, self).show()
+        self.bringToFront()
+
 
 def removeNationFromTechName(string):
     result = string.split(':')

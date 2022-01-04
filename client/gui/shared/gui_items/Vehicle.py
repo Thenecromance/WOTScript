@@ -41,7 +41,7 @@ from gui.shared.utils import makeSearchableString
 from helpers import i18n, time_utils, dependency, func_utils
 from items import vehicles, tankmen, customizations, getTypeInfoByName, getTypeOfCompactDescr, filterIntCDsByItemType
 from items.vehicles import getItemByCompactDescr, getVehicleType
-from items.components.c11n_constants import SeasonType, CustomizationType, HIDDEN_CAMOUFLAGE_ID, ApplyArea, CUSTOM_STYLE_POOL_ID, ItemTags
+from items.components.c11n_constants import SeasonType, CustomizationType, HIDDEN_CAMOUFLAGE_ID, ApplyArea, CUSTOM_STYLE_POOL_ID, ItemTags, EMPTY_ITEM_ID
 from shared_utils import findFirst, CONST_CONTAINER
 from skeletons.gui.game_control import IIGRController, IRentalsController, IVehiclePostProgressionController
 from skeletons.gui.lobby_context import ILobbyContext
@@ -50,6 +50,7 @@ from skeletons.gui.shared import IItemsCache
 from skeletons.gui.customization import ICustomizationService
 from nation_change.nation_change_helpers import hasNationGroup, iterVehTypeCDsInNationGroup
 from post_progression_common import TankSetupGroupsId
+from skeletons.new_year import INewYearController
 if typing.TYPE_CHECKING:
     from skeletons.gui.shared import IItemsRequester
     from items.components.c11n_components import StyleItem
@@ -237,6 +238,7 @@ class Vehicle(FittingItem):
     itemsCache = dependency.descriptor(IItemsCache)
     __customizationService = dependency.descriptor(ICustomizationService)
     __postProgressionCtrl = dependency.descriptor(IVehiclePostProgressionController)
+    nyController = dependency.descriptor(INewYearController)
 
     def __init__(self, strCompactDescr = None, inventoryID = -1, typeCompDescr = None, proxy = None, extData = None, invData = None):
         self.__postProgressionCtrl.processVehExtData(getVehicleType(typeCompDescr or strCompactDescr), extData)
@@ -285,7 +287,7 @@ class Vehicle(FittingItem):
         tradeInData = None
         personalTradeIn = None
         if proxy is not None and proxy.inventory.isSynced() and proxy.stats.isSynced() and proxy.shop.isSynced() and proxy.vehicleRotation.isSynced() and proxy.recycleBin.isSynced():
-            invDataTmp = proxy.inventory.getItems(GUI_ITEM_TYPE.VEHICLE, inventoryID)
+            invDataTmp = proxy.inventory.getItems(GUI_ITEM_TYPE.VEHICLE, self._inventoryID)
             if invDataTmp is not None:
                 invData = invDataTmp
             tradeInData = proxy.shop.tradeIn
@@ -472,6 +474,9 @@ class Vehicle(FittingItem):
         outfits = {season:self.__getOutfit(component, vehicleCD) for season, component in self._outfitComponents.iteritems()}
         return outfits
 
+    def getPersonalDiscountPrice(self):
+        return self._personalDiscountPrice
+
     def getUnlockDescrByIntCD(self, intCD):
         for unlockIdx, data in enumerate(self.descriptor.type.unlocksDescrs):
             if intCD == data[1]:
@@ -581,9 +586,9 @@ class Vehicle(FittingItem):
         return
 
     def _getOutfitComponent(self, proxy, style, season):
-        if style is not None:
+        if style is not None and season != SeasonType.EVENT:
             return self.__getStyledOutfitComponent(proxy, style, season)
-        elif self._isStyleInstalled:
+        elif self._isStyleInstalled and season != SeasonType.EVENT:
             return self.__getEmptyOutfitComponent()
         else:
             return self.__getCustomOutfitComponent(proxy, season)
@@ -612,6 +617,10 @@ class Vehicle(FittingItem):
     def getShopIcon(self, size = STORE_CONSTANTS.ICON_SIZE_MEDIUM):
         name = getNationLessName(self.name)
         return RES_SHOP_EXT.getVehicleIcon(size, name)
+
+    def getSnapshotIcon(self):
+        name = getIconResourceName(getNationLessName(self.name))
+        return RES_ICONS.getSnapshotIcon(name)
 
     @property
     def invID(self):
@@ -956,6 +965,10 @@ class Vehicle(FittingItem):
         return self._rentInfo.isWotPlus
 
     @property
+    def isTelecomRent(self):
+        return self._rentInfo.isTelecomRent
+
+    @property
     def type(self):
         return set(vehicles.VEHICLE_CLASS_TAGS & self.tags).pop()
 
@@ -1073,8 +1086,13 @@ class Vehicle(FittingItem):
         return count
 
     def getNewC11nItems(self, proxy):
-        newItemsIds = proxy.inventory.getC11nItemsNoveltyCounters(self._descriptor.type).iterkeys()
-        newItems = [ proxy.getItemByCD(itemCD) for itemCD in newItemsIds ]
+        newItems = []
+        for itemCD in proxy.inventory.getC11nItemsNoveltyCounters(self._descriptor.type).iterkeys():
+            item = proxy.getItemByCD(itemCD)
+            if item.id == EMPTY_ITEM_ID:
+                continue
+            newItems.append(item)
+
         return newItems
 
     def getState(self, isCurrentPlayer = True):
@@ -1142,10 +1160,6 @@ class Vehicle(FittingItem):
             return Vehicle.VEHICLE_STATE.RENTABLE_AGAIN
         return state
 
-    @classmethod
-    def __getEventVehicles(cls):
-        return cls.eventsCache.getEventVehicles()
-
     def isRotationApplied(self):
         return self.rotationGroupNum != 0
 
@@ -1206,7 +1220,7 @@ class Vehicle(FittingItem):
 
     @property
     def isEvent(self):
-        return self.isOnlyForEventBattles and self in Vehicle.__getEventVehicles()
+        return self.isOnlyForEventBattles
 
     @property
     def isDisabledInRoaming(self):
@@ -1701,7 +1715,7 @@ class Vehicle(FittingItem):
         return self._outfitComponents.get(season)
 
     def removeOutfitForSeason(self, season):
-        self._outfitComponents[season] = self.__getEmptyOutfitComponent()
+        self._outfitComponents[season] = customizations.CustomizationOutfit()
 
     def setCustomOutfit(self, season, outfit):
         for s in SeasonType.REGULAR:

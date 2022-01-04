@@ -28,6 +28,10 @@ class StatsRequester(AbstractSyncDataRequester, IStatsRequester):
         return self.wallet.componentsStatuses
 
     @property
+    def dynamicCurrencyStatuses(self):
+        return self.wallet.dynamicComponentsStatuses
+
+    @property
     def credits(self):
         return max(self.actualCredits, 0)
 
@@ -234,6 +238,10 @@ class StatsRequester(AbstractSyncDataRequester, IStatsRequester):
         return self.getCacheValue('piggyBank', {})
 
     @property
+    def entitlements(self):
+        return self.getCacheValue('entitlements', {})
+
+    @property
     def dummySessionStats(self):
         return self.getCacheValue('dummySessionStats', {})
 
@@ -266,6 +274,10 @@ class StatsRequester(AbstractSyncDataRequester, IStatsRequester):
     @property
     def oldVehInvIDs(self):
         return self.getCacheValue('oldVehInvIDs', ())
+
+    @property
+    def dynamicCurrencies(self):
+        return self.getCacheValue('dynamicCurrencies', {})
 
     def getMapsBlackList(self):
         blackList = self.getCacheValue('preferredMaps', {}).get('blackList', ())

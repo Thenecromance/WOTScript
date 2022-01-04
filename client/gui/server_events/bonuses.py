@@ -17,6 +17,7 @@ from frameworks.wulf import WindowLayer
 from gui import makeHtmlString
 from gui.app_loader.decorators import sf_lobby
 from gui.game_control.links import URLMacros
+from gui.gift_system.constants import NY_STAMP_CODE
 from gui.impl import backport
 from gui.impl.gen import R
 from gui.Scaleform.genConsts.BOOSTER_CONSTANTS import BOOSTER_CONSTANTS
@@ -50,6 +51,7 @@ from helpers.i18n import makeString as _ms
 from items import vehicles, tankmen
 from items.components import c11n_components as cc
 from items.components.crew_skins_constants import NO_CREW_SKIN_ID
+from items.components.ny_constants import CurrentNYConstants
 from items.tankmen import RECRUIT_TMAN_TOKEN_PREFIX
 from nations import NAMES
 from personal_missions import PM_BRANCH, PM_BRANCH_TO_FREE_TOKEN_NAME
@@ -606,7 +608,7 @@ class X5BattleTokensBonus(TokensBonus):
 
 class EntitlementBonus(SimpleBonus):
     _ENTITLEMENT_RECORD = namedtuple('_ENTITLEMENT_RECORD', ['id', 'amount'])
-    _FORMATTED_AMOUNT = ('ranked_202109_access',)
+    _FORMATTED_AMOUNT = ('ranked_202201_access', NY_STAMP_CODE)
 
     @staticmethod
     def hasConfiguredResources(entitlementID):
@@ -652,6 +654,11 @@ class EntitlementBonus(SimpleBonus):
 
     def getTooltip(self):
         return _getItemTooltip(self.getValue().id)
+
+    def getTooltipData(self):
+        if self.getValue().id == NY_STAMP_CODE:
+            return backport.createTooltipData(isSpecial=True, specialAlias=TOOLTIPS_CONSTANTS.NY_GIFT_STAMPS)
+        return backport.createTooltipData(self.getTooltip())
 
     def getValue(self):
         return self._ENTITLEMENT_RECORD(*self._value)
@@ -1591,6 +1598,9 @@ class RandomBlueprintBonus(SimpleBonus):
             return backport.text(R.strings.tooltips.blueprint.BlueprintFragmentTooltip.randomNational.header())
         return backport.text(R.strings.tooltips.blueprint.BlueprintFragmentTooltip.random.header())
 
+    def getAdditionalTooltipLabel(self):
+        return ''
+
     def getBlueprintSpecialAlias(self):
         if self._getBlueprintType() == BlueprintTypes.NATIONAL:
             return TOOLTIPS_CONSTANTS.BLUEPRINT_RANDOM_NATIONAL_INFO
@@ -1638,6 +1648,12 @@ class RandomBlueprintBonus(SimpleBonus):
         return self._HTML_TEMPLATE
 
 
+class BlueprintsIconsNames(CONST_CONTAINER):
+    FINAL_FRAGMENT = 'vehicle_complete'
+    UNIVERSAL_FRAGMENT = 'intelligence'
+    VEHICLE_FRAGMENT = 'vehicle'
+
+
 class VehicleBlueprintBonus(SimpleBonus):
     _HTML_TEMPLATE = 'vehicleBlueprints'
 
@@ -1662,10 +1678,13 @@ class VehicleBlueprintBonus(SimpleBonus):
     def formatBlueprintValue(self):
         return text_styles.neutral(self.itemsCache.items.getItemByCD(self._getFragmentCD()).shortUserName)
 
+    def formatUserNameValue(self):
+        return ''
+
     def getImageCategory(self):
         if self._isFinalFragment():
-            return 'vehicle_complete'
-        return 'vehicle'
+            return BlueprintsIconsNames.FINAL_FRAGMENT
+        return BlueprintsIconsNames.VEHICLE_FRAGMENT
 
     def getImage(self, size = 'big'):
         return RES_ICONS.getBlueprintFragment(size, self.getImageCategory())
@@ -1693,6 +1712,9 @@ class VehicleBlueprintBonus(SimpleBonus):
     def getBlueprintTooltipName(self):
         return backport.text(R.strings.tooltips.blueprint.VehicleBlueprintTooltip.header())
 
+    def getAdditionalTooltipLabel(self):
+        return backport.text(R.strings.quests.bonusName.blueprints.vehicle(), vehicleName=self.__getVehicleName())
+
     def _getDescription(self):
         return backport.text(R.strings.tooltips.blueprint.VehicleBlueprintTooltip.descriptionFirst())
 
@@ -1700,8 +1722,7 @@ class VehicleBlueprintBonus(SimpleBonus):
         return self._value[0]
 
     def _getFormattedMessage(self, styleSubset, formattedValue):
-        vehicleName = self.itemsCache.items.getItemByCD(self._getFragmentCD()).shortUserName
-        return makeHtmlString('html_templates:lobby/quests/{}'.format(styleSubset), self._HTML_TEMPLATE, {'vehicleName': vehicleName,
+        return makeHtmlString('html_templates:lobby/quests/{}'.format(styleSubset), self._HTML_TEMPLATE, {'vehicleName': self.__getVehicleName(),
          'value': formattedValue})
 
     def _format(self, styleSubset):
@@ -1718,6 +1739,9 @@ class VehicleBlueprintBonus(SimpleBonus):
             return True
         return False
 
+    def __getVehicleName(self):
+        return self.itemsCache.items.getItemByCD(self._getFragmentCD()).shortUserName
+
 
 class IntelligenceBlueprintBonus(VehicleBlueprintBonus):
     _HTML_TEMPLATE = 'universalBlueprints'
@@ -1729,7 +1753,7 @@ class IntelligenceBlueprintBonus(VehicleBlueprintBonus):
         return int(makeIntelligenceCD(self._getFragmentCD()))
 
     def getImageCategory(self):
-        return 'intelligence'
+        return BlueprintsIconsNames.UNIVERSAL_FRAGMENT
 
     def getBlueprintSpecialAlias(self):
         return TOOLTIPS_CONSTANTS.BLUEPRINT_FRAGMENT_INFO
@@ -1737,11 +1761,20 @@ class IntelligenceBlueprintBonus(VehicleBlueprintBonus):
     def formatBlueprintValue(self):
         return ''
 
+    def formatUserNameValue(self):
+        return self.getBlueprintTooltipName()
+
     def canPacked(self):
         return self._ctx.get('isPacked', False) and self.getCount() > 1
 
     def getBlueprintTooltipName(self):
         return backport.text(R.strings.tooltips.blueprint.BlueprintFragmentTooltip.intelFragment())
+
+    def getEpicAwardLabel(self):
+        return backport.text(R.strings.ny.reward.label.blueprint.universal(), count=self.getCount())
+
+    def getAdditionalTooltipLabel(self):
+        return backport.text(R.strings.quests.bonusName.blueprints.universal())
 
     def _getDescription(self):
         return backport.text(R.strings.tooltips.blueprint.BlueprintFragmentTooltip.intelDescription())
@@ -1769,6 +1802,9 @@ class NationalBlueprintBonus(VehicleBlueprintBonus):
     def getBlueprintSpecialAlias(self):
         return TOOLTIPS_CONSTANTS.BLUEPRINT_FRAGMENT_INFO
 
+    def formatUserNameValue(self):
+        return self.getBlueprintTooltipName()
+
     def formatBlueprintValue(self):
         return ''
 
@@ -1777,6 +1813,12 @@ class NationalBlueprintBonus(VehicleBlueprintBonus):
 
     def getBlueprintTooltipName(self):
         return i18n.makeString(TOOLTIPS.BLUEPRINT_BLUEPRINTFRAGMENTTOOLTIP_NATIONALFRAGMENT)
+
+    def getEpicAwardLabel(self):
+        return backport.text(R.strings.ny.reward.label.blueprint.national(), count=self.getCount())
+
+    def getAdditionalTooltipLabel(self):
+        return backport.text(R.strings.quests.bonusName.blueprints.nation(), nationName=self._localizedNationName())
 
     def _getDescription(self):
         return i18n.makeString(TOOLTIPS.BLUEPRINT_BLUEPRINTFRAGMENTTOOLTIP_NATIONALDESCRIPTION, nation=self._localizedNationName())
@@ -2088,6 +2130,9 @@ _BONUSES = {Currency.CREDITS: CreditsBonus,
  'blueprints': blueprintBonusFactory,
  'blueprintsAny': randomBlueprintBonusFactory,
  'crewSkins': CrewSkinsBonusFactory(),
+ CurrentNYConstants.TOYS: SimpleBonus,
+ CurrentNYConstants.TOY_FRAGMENTS: SimpleBonus,
+ CurrentNYConstants.FILLERS: CountableIntegralBonus,
  'entitlements': entitlementsFactory,
  'rankedDailyBattles': CountableIntegralBonus,
  'rankedBonusBattles': CountableIntegralBonus,
@@ -2326,6 +2371,8 @@ def getSplitBonusFunction(bonus):
         return None
     elif isinstance(bonus, CustomizationsBonus):
         return splitCustomizationsBonus
+    elif isinstance(bonus, DossierBonus):
+        return splitDossierBonus
     elif isinstance(bonus, (IntegralBonus, GoldBonus)):
         return splitIntegralBonuses
     elif isinstance(bonus, SimpleBonus):
@@ -2355,6 +2402,16 @@ def splitSimpleBonuses(bonus):
 
     else:
         split.append(bonus)
+    return split
+
+
+def splitDossierBonus(bonus):
+    split = []
+    value = bonus.getValue()
+    for dossierType, achivements in value.iteritems():
+        for key, data in achivements.iteritems():
+            split.append(DossierBonus(bonus.getName(), {dossierType: {key: data}}, bonus.isCompensation(), bonus.getContext()))
+
     return split
 
 

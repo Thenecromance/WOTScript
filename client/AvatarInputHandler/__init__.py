@@ -15,6 +15,7 @@ import DynamicCameras.ArtyCamera
 import DynamicCameras.DualGunCamera
 import DynamicCameras.SniperCamera
 import DynamicCameras.StrategicCamera
+import GenericComponents
 import MapCaseMode
 import RespawnDeathMode
 import aih_constants
@@ -286,6 +287,8 @@ class AvatarInputHandler(CallbackDelayer, ScriptGameObject):
                 self.__detachedCommands.append(VehicleUpgradePanelControl())
             if ARENA_BONUS_TYPE_CAPS.checkAny(player.arena.bonusType, ARENA_BONUS_TYPE_CAPS.SWITCH_SETUPS):
                 self.__persistentCommands.append(PrebattleSetupsControl())
+            vehicle.appearance.removeComponentByType(GenericComponents.ControlModeStatus)
+            vehicle.appearance.createComponent(GenericComponents.ControlModeStatus, _CTRL_MODES.index(self.__ctrlModeName))
             return
 
     def prerequisites(self):
@@ -413,6 +416,8 @@ class AvatarInputHandler(CallbackDelayer, ScriptGameObject):
 
     def setAutorotation(self, bValue, triggeredByKey = False):
         if not self.__curCtrl.enableSwitchAutorotationMode(triggeredByKey):
+            return
+        elif triggeredByKey and BigWorld.player().isVehicleMoving():
             return
         elif not BigWorld.player().isOnArena:
             return
@@ -636,6 +641,8 @@ class AvatarInputHandler(CallbackDelayer, ScriptGameObject):
             self.onCameraChanged(eMode, vehicleID)
             if not isReplayPlaying and vehicle is not None and not vehicle.isUpgrading:
                 self.__curCtrl.handleMouseEvent(0.0, 0.0, 0.0)
+            vehicle.appearance.removeComponentByType(GenericComponents.ControlModeStatus)
+            vehicle.appearance.createComponent(GenericComponents.ControlModeStatus, _CTRL_MODES.index(eMode))
             return
 
     def onVehicleControlModeChanged(self, eMode):

@@ -1,4 +1,5 @@
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/techtree/nodes.py
+import typing
 from gui.Scaleform.daapi.view.lobby.techtree.settings import DEFAULT_UNLOCK_PROPS
 from gui.shared.formatters import text_styles
 from gui.shared.formatters import getItemPricesVO, getItemRestorePricesVO, getItemUnlockPricesVO
@@ -112,6 +113,9 @@ class ExposedNode(object):
     def getBuyPrices(self):
         raise NotImplementedError
 
+    def getActionDetails(self):
+        raise NotImplementedError
+
     def getCompareData(self):
         raise NotImplementedError
 
@@ -198,6 +202,11 @@ class RealNode(ExposedNode):
 
     def getBuyPrices(self):
         return getItemPricesVO(self.__item.getBuyPrice())
+
+    def getActionDetails(self):
+        personalDiscount = self.__item.getPersonalDiscountPrice()
+        isPersonal = personalDiscount == self.__item.getBuyPrice().price if personalDiscount is not None else False
+        return (self.getActionDiscount(), isPersonal)
 
     def isActionPrice(self):
         itemPrice = self.__item.buyPrices.itemPrice
@@ -302,6 +311,9 @@ class AnnouncementNode(ExposedNode):
 
     def getBuyPrices(self):
         return None
+
+    def getActionDetails(self):
+        return (0, False)
 
     def getCompareData(self):
         return {}

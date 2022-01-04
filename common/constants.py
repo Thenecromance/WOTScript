@@ -815,6 +815,7 @@ class Configs(enum.Enum):
     BATTLE_ROYALE_CONFIG = 'battle_royale_config'
     EPIC_CONFIG = 'epic_config'
     MAPBOX_CONFIG = 'mapbox_config'
+    GIFTS_CONFIG = 'gifts_config'
 
 
 class RESTRICTION_TYPE:
@@ -1259,6 +1260,7 @@ LOOTBOX_TOKEN_PREFIX = 'lootBox:'
 TWITCH_TOKEN_PREFIX = 'token:twitch'
 EMAIL_CONFIRMATION_QUEST_ID = 'email_confirmation'
 EMAIL_CONFIRMATION_TOKEN_NAME = 'acc_completion:email_confirm'
+DEMO_ACCOUNT_ATTR = 'isDemoAccount'
 
 def personalMissionFreeTokenName(branch):
     if branch <= 1:
@@ -1435,6 +1437,7 @@ class RentType(object):
     SEASON_RENT = 4
     SEASON_CYCLE_RENT = 5
     WOTPLUS_RENT = 6
+    TELECOM_RENT = 7
 
 
 class GameSeasonType(object):
@@ -1443,12 +1446,14 @@ class GameSeasonType(object):
     EPIC = 2
     BATTLE_ROYALE = 3
     MAPBOX = 4
+    EVENT_BATTLES = 5
 
 
 SEASON_TYPE_BY_NAME = {'ranked': GameSeasonType.RANKED,
  'epic': GameSeasonType.EPIC,
  'battle_royale': GameSeasonType.BATTLE_ROYALE,
- 'mapbox': GameSeasonType.MAPBOX}
+ 'mapbox': GameSeasonType.MAPBOX,
+ 'event_battles': GameSeasonType.EVENT_BATTLES}
 SEASON_NAME_BY_TYPE = {val:key for key, val in SEASON_TYPE_BY_NAME.iteritems()}
 CHANNEL_SEARCH_RESULTS_LIMIT = 50
 USER_SEARCH_RESULTS_LIMIT = 50
@@ -1535,7 +1540,7 @@ class REQUEST_COOLDOWN:
     SEND_INVITATION_COOLDOWN = 1.0
     RUN_QUEST = 1.0
     PAWN_FREE_AWARD_LIST = 1.0
-    LOOTBOX = 1.0
+    LOOTBOX = 0.5
     BADGES = 2.0
     CREW_SKINS = 0.3
     BPF_COMMAND = 1.0
@@ -1554,6 +1559,19 @@ class REQUEST_COOLDOWN:
     ANONYMIZER = 1.0
     UPDATE_IN_BATTLE_PLAYER_RELATIONS = 1.0
     FLUSH_RELATIONS = 1.0
+    NEW_YEAR_SLOT_FILL = 0.4
+    NEW_YEAR_CRAFT = 0.5
+    NEW_YEAR_CRAFT_OLD_TOYS = 0.5
+    NEW_YEAR_BREAK_TOYS = 1.0
+    NEW_YEAR_SEE_INVENTORY_TOYS = 0.5
+    NEW_YEAR_SEE_COLLECTION_TOYS = 0.5
+    NEW_YEAR_SELECT_DISCOUNT = 1.0
+    NEW_YEAR_VIEW_ALBUM = 0.5
+    NEW_YEAR_CONVERT_FILLERS = 1.0
+    NEW_YEAR_FILL_OLD_COLLECTION = 0.5
+    NEW_YEAR_SET_NY_VEHICLE = 0.5
+    NEW_YEAR_SIMPLIFY_CELEBRITY_QUEST = 1.0
+    NEW_YEAR_CHOOSE_SLOT_BONUS = 0.5
     EQUIP_ENHANCEMENT = 1.0
     DISMOUNT_ENHANCEMENT = 1.0
     BUY_BATTLE_PASS = 1.0
@@ -1572,6 +1590,7 @@ class REQUEST_COOLDOWN:
     TANKMAN_RESPECIALIZE = 1.0
     POST_PROGRESSION_BASE = 1.0
     POST_PROGRESSION_CELL = 0.5
+    SYNC_GIFTS = 0.5
 
 
 IS_SHOW_INGAME_HELP_FIRST_TIME = False
@@ -1892,6 +1911,10 @@ INT_USER_SETTINGS_KEYS = {USER_SERVER_SETTINGS.VERSION: 'Settings version',
  USER_SERVER_SETTINGS.LINKEDSET_QUESTS: 'linkedset quests show reward info',
  USER_SERVER_SETTINGS.QUESTS_PROGRESS: 'feedback quests progress',
  91: 'Loot box last viewed count',
+ 92: 'Oriental loot box last viewed count',
+ 93: 'New year loot box last viewed count',
+ 94: 'Fairytale loot box last viewed count',
+ 95: 'Christmas loot box last viewed count',
  USER_SERVER_SETTINGS.SESSION_STATS: 'sessiong statistics settings',
  97: 'BattlePass carouse filter 1',
  98: 'Battle Pass Storage',
@@ -1900,7 +1923,9 @@ INT_USER_SETTINGS_KEYS = {USER_SERVER_SETTINGS.VERSION: 'Settings version',
  101: 'Battle Royale carousel filter 2',
  USER_SERVER_SETTINGS.GAME_EXTENDED_2: 'Game extended section settings 2',
  103: 'Mapbox carousel filter 1',
- 104: 'Mapbox carousel filter 2'}
+ 104: 'Mapbox carousel filter 2',
+ 105: 'New Year settings storage',
+ 106: 'Common loot box last viewed count'}
 
 class WG_GAMES:
     TANKS = 'wot'
@@ -2812,16 +2837,22 @@ class EquipSideEffect(enum.IntEnum):
     AMMO_AUTO_LOAD_FAILED = 2
 
 
-class TrackBreakMode(enum.Enum):
+class TrackBreakMode(enum.IntEnum):
     STOP = 0
     SLOW = 1
 
 
-class VehicleSide(enum.Enum):
+class VehicleSide(enum.IntEnum):
     FRONT = 0
     BACK = 1
     LEFT = 2
     RIGHT = 3
+
+
+class DeviceRepairMode(enum.IntEnum):
+    NORMAL = 0
+    SLOWED = 1
+    SUSPENDED = 2
 
 
 BATTLE_MODE_VEHICLE_TAGS = {'event_battles',
@@ -2830,6 +2861,14 @@ BATTLE_MODE_VEHICLE_TAGS = {'event_battles',
  'bob',
  'battle_royale',
  'clanWarsBattles'}
+
+@enum.unique
+
+class EventPhase(enum.Enum):
+    NOT_STARTED = 0
+    IN_PROGRESS = 1
+    FINISHED = 2
+
 
 class ACCOUNT_KICK_REASONS(object):
     UNKNOWN = 0
@@ -2849,6 +2888,7 @@ class ACCOUNT_KICK_REASONS(object):
     SPAM_PROTECTION_SHOP = 15
     SPAM_PROTECTION_DOSSIER = 16
     CURFEW_BAN = 17
+    DEMO_ACCOUNT_BOOTCAMP_FAILURE = 18
     BAN_RANGE = (BAN, CURFEW_BAN)
 
 
@@ -2875,9 +2915,3 @@ class BATTLE_MODE_LOCK_MASKS(object):
         if 'clanWarsBattles' in vehType.tags:
             return BATTLE_MODE_LOCK_MASKS.getClanRentedVehLockMode(vehLockMode)
         return BATTLE_MODE_LOCK_MASKS.getCommonVehLockMode(vehLockMode)
-
-
-class DeviceRepairMode(enum.Enum):
-    NORMAL = 0
-    SLOWED = 1
-    SUSPENDED = 2

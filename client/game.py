@@ -358,7 +358,7 @@ def handleKeyEvent(event):
         if inputHandler is not None:
             if inputHandler.handleKeyEvent(event):
                 return True
-        for handler in g_keyEventHandlers:
+        for handler in g_keyEventHandlers.copy():
             try:
                 if handler(event):
                     return True
@@ -510,8 +510,6 @@ def checkBotNet():
     sys.path.append('test_libs')
     from path_manager import g_pathManager
     g_pathManager.setPathes()
-    from bigworld_reactor import installBWReactor
-    installBWReactor()
     from scenario_player import g_scenarioPlayer
     rpycPort = sys.argv[sys.argv.index(botArg) + 1]
     g_scenarioPlayer.setRpycConection(rpycPort)

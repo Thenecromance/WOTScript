@@ -8,6 +8,7 @@ import constants
 from debug_utils import LOG_CURRENT_EXCEPTION
 from soft_exception import SoftException
 VERSION_FILE_PATH = '../version.xml'
+_CLIENT_VERSION = None
 
 def gEffectsDisabled():
     return False
@@ -87,12 +88,15 @@ def int2roman(number):
     return result
 
 
-def getClientVersion():
-    sec = ResMgr.openSection(VERSION_FILE_PATH)
-    if sec is None:
-        return ''
-    else:
-        return sec.readString('version')
+def getClientVersion(force = True):
+    global _CLIENT_VERSION
+    if _CLIENT_VERSION is None or force:
+        sec = ResMgr.openSection(VERSION_FILE_PATH)
+        if sec is None:
+            _CLIENT_VERSION = ''
+        else:
+            _CLIENT_VERSION = sec.readString('version')
+    return _CLIENT_VERSION
 
 
 def getShortClientVersion():
@@ -217,3 +221,7 @@ class ClanQuestButtonHandler(object):
         url = value.get('action_url', '') if isinstance(value, dict) else ''
         showClanQuestWindow(getClanQuestURL() + url)
         return
+
+
+def isMemoryRiskySystem():
+    return BigWorld.totalVirtualMemory() < 3145728

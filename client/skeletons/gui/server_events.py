@@ -12,6 +12,7 @@ class IEventsCache(object):
     onEventsVisited = None
     onProfileVisited = None
     onPersonalQuestsVisited = None
+    onQuestConditionUpdated = None
 
     def init(self):
         raise NotImplementedError
@@ -77,13 +78,16 @@ class IEventsCache(object):
     def getGroups(self, filterFunc = None):
         raise NotImplementedError
 
+    def getCelebrityQuests(self, filterFunc = None):
+        raise NotImplementedError
+
     def getHiddenQuests(self, filterFunc = None):
         raise NotImplementedError
 
     def getRankedQuests(self, filterFunc = None):
         raise NotImplementedError
 
-    def getAllQuests(self, filterFunc = None, includePersonalMissions = False):
+    def getAllQuests(self, filterFunc = None, includePersonalMissions = False, includeCelebrityQuests = False):
         raise NotImplementedError
 
     def getActions(self, filterFunc = None):
@@ -95,13 +99,10 @@ class IEventsCache(object):
     def getAnnouncedActions(self):
         raise NotImplementedError
 
-    def getEventBattles(self):
+    def getQuestByID(self, qID):
         raise NotImplementedError
 
-    def isEventEnabled(self):
-        raise NotImplementedError
-
-    def getEventVehicles(self, itemsCache = None):
+    def getQuestsByIDs(self, qIDs):
         raise NotImplementedError
 
     def getEvents(self, filterFunc = None):
@@ -132,9 +133,6 @@ class IEventsCache(object):
         raise NotImplementedError
 
     def getTradeInActions(self):
-        raise NotImplementedError
-
-    def getYearHareAffairAction(self):
         raise NotImplementedError
 
     def isBalancedSquadEnabled(self):

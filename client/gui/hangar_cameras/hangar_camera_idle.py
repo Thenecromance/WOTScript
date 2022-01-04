@@ -30,7 +30,7 @@ class HangarCameraIdleController(HangarCameraSettingsListener):
     def _onSpaceCreated(self):
         super(HangarCameraIdleController, self)._onSpaceCreated()
         g_eventBus.addListener(CameraRelatedEvents.FORCE_DISABLE_IDLE_PARALAX_MOVEMENT, self.__onCameraForceDisable, EVENT_BUS_SCOPE.LOBBY)
-        self.__camPeriod = self.__getHangarCamPeriodSetting()
+        self.__camPeriod = self._getHangarCamPeriodSetting()
         self._setStartDelay(self.__camPeriod)
 
     def _onSpaceDestroy(self, inited):
@@ -42,11 +42,8 @@ class HangarCameraIdleController(HangarCameraSettingsListener):
     def _setStartDelay(self, delay):
         pass
 
-    def __getHangarCamPeriodSetting(self):
-        return settings.convertSettingToFeatures(self.settingsCore.getSetting(GAME.HANGAR_CAM_PERIOD))
-
     def _onHangarCamPeriodChanged(self):
-        self.__camPeriod = self.__getHangarCamPeriodSetting()
+        self.__camPeriod = self._getHangarCamPeriodSetting()
         if self.__isForcedDisabled:
             return
         self._setStartDelay(self.__camPeriod)
@@ -111,6 +108,9 @@ class HangarCameraIdle(HangarCameraIdleController, CallbackDelayer, TimeDeltaMet
         HangarCameraIdleController.destroy(self)
         return
 
+    def _getHangarCamPeriodSetting(self):
+        return settings.convertSettingToFeatures(self.settingsCore.getSetting(GAME.HANGAR_CAM_PERIOD))
+
     def _setStartDelay(self, delay):
         self.setStartDelay(delay)
 
@@ -120,6 +120,9 @@ class HangarCameraIdle(HangarCameraIdleController, CallbackDelayer, TimeDeltaMet
             BigWorld.addIdleCallbackForDelay(delay, self.__startCameraIdle, self.__stopCameraIdle)
         else:
             self.__stopCameraIdle()
+
+    def setDefaultStartDelay(self):
+        self.setStartDelay(self._getHangarCamPeriodSetting())
 
     def __startCameraIdle(self):
         g_eventBus.handleEvent(CameraRelatedEvents(CameraRelatedEvents.IDLE_CAMERA, ctx={'started': True}), scope=EVENT_BUS_SCOPE.DEFAULT)
@@ -181,7 +184,6 @@ class HangarCameraIdle(HangarCameraIdleController, CallbackDelayer, TimeDeltaMet
         self.__setCameraParams(yaw, pitch, dist)
         if self.__currentIdleTime < self.TIME_OUT:
             return 0.0
-        g_eventBus.handleEvent(CameraRelatedEvents(CameraRelatedEvents.IDLE_CAMERA, ctx={'started': False}), scope=EVENT_BUS_SCOPE.DEFAULT)
         g_eventBus.handleEvent(CameraRelatedEvents(CameraRelatedEvents.IDLE_CAMERA, ctx={'started': False}), scope=EVENT_BUS_SCOPE.DEFAULT)
 
     def __easeOutValue(self, startSpeed, prevValue, dt):

@@ -986,6 +986,7 @@ class SmokeConfigReader(object):
         self.totalDuration = component_constants.ZERO_FLOAT
         self.smokeOpacity = component_constants.ZERO_FLOAT
         self.visionRadiusFactor = component_constants.ZERO_FLOAT
+        self.ingnoreVisionRaduisForTeammates = False
         self.dotParams = None
         self.areaLength = component_constants.ZERO_FLOAT
         self.areaWidth = component_constants.ZERO_FLOAT
@@ -1019,6 +1020,7 @@ class SmokeConfigReader(object):
         self.totalDuration = _xml.readPositiveFloat(xmlCtx, section, 'totalDuration')
         self.smokeOpacity = _xml.readPositiveFloat(xmlCtx, section, 'smokeOpacity')
         self.visionRadiusFactor = _xml.readPositiveFloat(xmlCtx, section, 'visionRadiusFactor')
+        self.ingnoreVisionRaduisForTeammates = _xml.readBool(xmlCtx, section, 'ingnoreVisionRaduisForTeammates', False)
         self.areaLength = _xml.readPositiveFloat(xmlCtx, section, 'areaLength')
         self.areaWidth = _xml.readPositiveFloat(xmlCtx, section, 'areaWidth')
         self.projectilesNumber = _xml.readNonNegativeInt(xmlCtx, section, 'projectilesNumber')

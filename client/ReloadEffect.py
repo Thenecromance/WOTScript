@@ -586,8 +586,7 @@ class DualGunReload(_GunReload):
         return
 
     def reloadEnd(self):
-        self.stopCallback(self.__onReloadStart)
-        self.stopCallback(self.__onAmmoLow)
+        pass
 
     def __onReloadStart(self, time):
         if fabs(time - BigWorld.time()) > 0.1:

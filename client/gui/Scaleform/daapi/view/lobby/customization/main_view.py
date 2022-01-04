@@ -296,7 +296,8 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
                 self.__initAnchorsPositionsCallback = BigWorld.callback(0.0, self.__initAnchorsPositions)
                 return
         self.__setAnchorsInitData()
-        self.__locateCameraToCustomizationPreview(updateTankCentralPoint=True, forceLocate=True)
+        if not self.__styleInfo.visible:
+            self.__locateCameraToCustomizationPreview(updateTankCentralPoint=True, forceLocate=True)
         return
 
     def onBuyConfirmed(self, isOk):
@@ -700,6 +701,7 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
         self.__ctx.events.onHideStyleInfo += self.__onHideStyleInfo
         self.__ctx.events.onEditModeEnabled += self.__onEditModeEnabled
         self.__ctx.events.onGetItemBackToHand += self.__onGetItemBackToHand
+        self.__ctx.events.onCloseWindow += self.onCloseWindow
         self.__ctx.events.onSlotSelected += self.__onSlotSelected
         self.__ctx.events.onSlotUnselected += self.__onSlotUnselected
         self.__ctx.events.onAnchorsStateChanged += self.__onAnchorsStateChanged
@@ -721,7 +723,6 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
         self.fireEvent(CameraRelatedEvents(CameraRelatedEvents.FORCE_DISABLE_IDLE_PARALAX_MOVEMENT, ctx={'isDisable': True,
          'setIdle': True,
          'setParallax': True}), scope=EVENT_BUS_SCOPE.LOBBY)
-        self.fireEvent(events.HangarVehicleEvent(events.HangarVehicleEvent.HERO_TANK_MARKER, ctx={'isDisable': True}), EVENT_BUS_SCOPE.LOBBY)
         self.fireEvent(events.LobbyHeaderMenuEvent(events.LobbyHeaderMenuEvent.TOGGLE_VISIBILITY, ctx={'state': HeaderMenuVisibilityState.ONLINE_COUNTER}), EVENT_BUS_SCOPE.LOBBY)
         if self.__ctx.c11nCameraManager is not None:
             self.__ctx.c11nCameraManager.locateCameraToCustomizationPreview(forceLocate=True)
@@ -756,7 +757,6 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
             entity.appearance.loadState.unsubscribe(self.__onVehicleLoadFinished, self.__onVehicleLoadStarted)
             entity.appearance.turretRotator.onTurretRotated -= self.__onTurretAndGunRotated
         self.fireEvent(events.HangarCustomizationEvent(events.HangarCustomizationEvent.RESET_VEHICLE_MODEL_TRANSFORM), scope=EVENT_BUS_SCOPE.LOBBY)
-        self.fireEvent(events.HangarVehicleEvent(events.HangarVehicleEvent.HERO_TANK_MARKER, ctx={'isDisable': False}), EVENT_BUS_SCOPE.LOBBY)
         self.fireEvent(events.LobbyHeaderMenuEvent(events.LobbyHeaderMenuEvent.TOGGLE_VISIBILITY, ctx={'state': HeaderMenuVisibilityState.ALL}), EVENT_BUS_SCOPE.LOBBY)
         self.fireEvent(CameraRelatedEvents(CameraRelatedEvents.FORCE_DISABLE_IDLE_PARALAX_MOVEMENT, ctx={'isDisable': False,
          'setIdle': True,
@@ -803,6 +803,7 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
         self.__ctx.events.onHideStyleInfo -= self.__onHideStyleInfo
         self.__ctx.events.onEditModeEnabled -= self.__onEditModeEnabled
         self.__ctx.events.onGetItemBackToHand -= self.__onGetItemBackToHand
+        self.__ctx.events.onCloseWindow -= self.onCloseWindow
         self.__ctx.events.onSlotSelected -= self.__onSlotSelected
         self.__ctx.events.onSlotUnselected -= self.__onSlotUnselected
         self.__ctx.events.onAnchorsStateChanged -= self.__onAnchorsStateChanged
@@ -812,6 +813,9 @@ class MainView(LobbySubView, CustomizationMainViewMeta):
         if self.__initAnchorsPositionsCallback is not None:
             BigWorld.cancelCallback(self.__initAnchorsPositionsCallback)
             self.__initAnchorsPositionsCallback = None
+        exitCallback = self.__ctx.getExitCallback()
+        if exitCallback is not None:
+            exitCallback.destroy()
         super(MainView, self)._dispose()
         self.__ctx = None
         self.service.closeCustomization()

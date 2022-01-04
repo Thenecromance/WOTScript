@@ -131,6 +131,10 @@ class IStatsRequester(IRequester):
         raise NotImplementedError
 
     @property
+    def dynamicCurrencyStatuses(self):
+        raise NotImplementedError
+
+    @property
     def credits(self):
         raise NotImplementedError
 
@@ -327,6 +331,10 @@ class IStatsRequester(IRequester):
         raise NotImplementedError
 
     @property
+    def entitlements(self):
+        raise NotImplementedError
+
+    @property
     def dummySessionStats(self):
         raise NotImplementedError
 
@@ -348,6 +356,10 @@ class IStatsRequester(IRequester):
 
     @property
     def oldVehInvIDs(self):
+        raise NotImplementedError
+
+    @property
+    def dynamicCurrencies(self):
         raise NotImplementedError
 
     def getMapsBlackList(self):
@@ -914,6 +926,9 @@ class ITokensRequester(IRequester):
     def getAttemptsAfterGuaranteedRewards(self, box):
         raise NotImplementedError
 
+    def getLootBoxesStats(self):
+        raise NotImplementedError
+
     def getLootBoxes(self):
         raise NotImplementedError
 
@@ -1066,4 +1081,11 @@ class IOffersRequester(IRequester):
         raise NotImplementedError
 
     def getReceivedGifts(self, offerID):
+        raise NotImplementedError
+
+
+class IGiftSystemRequester(IRequester):
+
+    @property
+    def isHistoryReady(self):
         raise NotImplementedError

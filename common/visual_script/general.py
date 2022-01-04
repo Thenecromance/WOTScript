@@ -75,6 +75,10 @@ class AddTestResult(Block):
     def blockCategory(cls):
         return 'Development'
 
+    @classmethod
+    def mode(cls):
+        return BLOCK_MODE.DEV
+
 
 class TestCase(Block):
 

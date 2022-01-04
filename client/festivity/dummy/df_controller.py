@@ -18,3 +18,12 @@ class DummyController(IFestivityController):
 
     def getHangarQuestsFlagData(self):
         return _DEFAULT_QUESTS_FLAG
+
+    def getHangarWidgetLinkage(self):
+        return None
+
+    def getHangarEdgeColor(self):
+        return None
+
+    def isPostEvent(self):
+        return False
