@@ -1,5 +1,6 @@
 # Embedded file name: scripts/client/services_config.py
 import logging
+import festivity
 __all__ = ('getClientServicesConfig',)
 _logger = logging.getLogger(__name__)
 
@@ -12,7 +13,6 @@ def getClientServicesConfig(manager):
     import gameplay
     import helpers
     import uilogging
-    import festivity
     from vehicle_systems.appearance_cache import AppearanceCache
     from skeletons.connection_mgr import IConnectionManager
     from skeletons.map_activities import IMapActivities

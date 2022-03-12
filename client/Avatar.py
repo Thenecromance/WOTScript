@@ -261,7 +261,6 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
         self.__magneticAutoAimTags = self.lobbyContext.getServerSettings().getMagneticAutoAimConfig().get('enableForTags', set())
         self.__isAimingEnded = False
         self.__vehiclesWaitedInfo = {}
-        self.__isVehicleSwitching = False
         self.__isVehicleMoving = False
         return
 
@@ -303,7 +302,6 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
             self.__firstHealthUpdate = True
             self.__deadOnLoading = False
             self.__isRespawnAvailable = False
-            self.__isVehicleSwitching = False
             self.__ownVehicleStabMProv = Math.WGAdaptiveMatrixProvider()
             self.__ownVehicleStabMProv.setStaticTransform(Math.Matrix())
             self.__aimingInfo = [0.0,
@@ -369,7 +367,6 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
             uniprof.exitFromRegion('avatar.entering')
             from battleground.location_point_manager import g_locationPointManager
             g_locationPointManager.activate()
-            BigWorld.target.isFastPicking = False
             return
 
     def loadPrerequisites(self, prereqs):
@@ -536,7 +533,6 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
                     BigWorld.callback(0, partial(self.set_playerVehicleID, 0))
             self.__consistentMatrices.notifyEnterWorld(self)
             AvatarObserver.onEnterWorld(self)
-            BigWorld.enableLowFrequencyAnimation(self.spaceID, False)
             return
 
     def onLeaveWorld(self):
@@ -547,7 +543,6 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
     def onVehicleChanged(self):
         LOG_DEBUG('Avatar vehicle has changed to %s' % self.vehicle)
         AvatarObserver.onVehicleChanged(self)
-        self.__isVehicleSwitching = False
         if self.vehicle is not None:
             self.__consistentMatrices.notifyVehicleChanged(self)
             ctrl = self.guiSessionProvider.shared.vehicleState
@@ -664,16 +659,22 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
                         return True
                     if key == Keys.KEY_7:
                         self.base.setDevelopmentFeature(0, 'destroy_self', 0, '')
+                        return True
                     if key == Keys.KEY_8:
                         self.base.setDevelopmentFeature(0, 'kill_engine', 0, '')
+                        return True
                     if key == Keys.KEY_9:
                         self.base.setDevelopmentFeature(0, 'damage_device', 500, 'ammoBayHealth')
+                        return True
                     if key == Keys.KEY_0:
                         self.base.setDevelopmentFeature(0, 'damage_device', 500, 'fuelTankHealth')
+                        return True
                     if key == Keys.KEY_MINUS:
                         self.base.setDevelopmentFeature(0, 'damage_device', 500, 'engineHealth')
+                        return True
                     if key == Keys.KEY_F9:
                         self.__makeScreenShot()
+                        return True
                     if key == Keys.KEY_F:
                         vehicle = BigWorld.entity(self.playerVehicleID)
                         vehicle.filter.enableClientFilters = not vehicle.filter.enableClientFilters
@@ -713,6 +714,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
                         return True
                     if key == Keys.KEY_PAUSE:
                         self.base.setDevelopmentFeature(0, 'togglePauseAI', 0, '')
+                        return True
                     if key == Keys.KEY_Y:
                         ctrl = self.guiSessionProvider.shared.areaMarker
                         if ctrl:
@@ -732,6 +734,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
                         return True
                     if key == Keys.KEY_BACKSLASH:
                         self.base.setDevelopmentFeature(0, 'killEnemyTeam', 0, '')
+                        return True
                 if constants.HAS_DEV_RESOURCES and cmdMap.isFired(CommandMapping.CMD_SWITCH_SERVER_MARKER, key) and isDown:
                     self.gunRotator.showServerMarker = not self.gunRotator.showServerMarker
                     return True
@@ -1122,7 +1125,6 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
         if vehicleID != -1:
             staticPosition = None
         self.consistentMatrices.notifyViewPointChanged(self, staticPosition)
-        self.__isVehicleSwitching = True
         return
 
     def onAutoAimVehicleLost(self, lossReasonFlags):
@@ -1499,7 +1501,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
             extra = typeDescr.extras[extraIndex] if extraIndex != 0 else None
             if vehicleID == self.playerVehicleID or vehicleID == observedVehID or not self.__isVehicleAlive and vehicleID == self.inputHandler.ctrl.curVehicleID:
                 self.__showDamageIconAndPlaySound(damageCode, extra, vehicleID)
-            if damageCode not in self.__damageInfoNoNotification and not self.__isVehicleSwitching:
+            if damageCode not in self.__damageInfoNoNotification:
                 self.guiSessionProvider.shared.messages.showVehicleDamageInfo(self, damageCode, vehicleID, entityID, extra, equipmentID)
             TriggersManager.g_manager.activateTrigger(TRIGGER_TYPE.PLAYER_RECEIVE_DAMAGE, attackerId=entityID)
             return
@@ -2518,8 +2520,8 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
         self.inputHandler.detachCursor(value, enableAiming)
 
     __cantMoveCriticals = {'engine_destroyed': 'cantMoveEngineDamaged',
-     'leftTrack_destroyed': 'cantMoveChassisDamaged',
-     'rightTrack_destroyed': 'cantMoveChassisDamaged',
+     'leftTrack0_destroyed': 'cantMoveChassisDamaged',
+     'rightTrack0_destroyed': 'cantMoveChassisDamaged',
      'vehicle_destroyed': 'cantMoveVehicleDestroyed',
      'crew_destroyed': 'cantMoveCrewInactive'}
 
@@ -2626,7 +2628,7 @@ class PlayerAvatar(BigWorld.Entity, ClientChat, CombatEquipmentManager, AvatarOb
             sound = extra.sounds.get(soundType)
             if sound in self._muteSounds:
                 sound = None
-            if sound is not None and not self.__isVehicleSwitching:
+            if sound is not None:
                 self.soundNotifications.play(sound, checkFn=soundNotificationCheckFn)
         return
 

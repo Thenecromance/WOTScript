@@ -1,6 +1,7 @@
 # Embedded file name: scripts/client/web/web_client_api/common.py
 import itertools
 from collections import namedtuple
+from enum import Enum, unique
 from gui.shared.money import MONEY_UNDEFINED
 from shared_utils import CONST_CONTAINER
 SPA_ID_TYPES = (int, long)
@@ -17,10 +18,42 @@ VehicleOfferEntry.__new__.__defaults__ = ('',
  None,
  False)
 ItemPackEntry = namedtuple('ItemPackEntry', ('type', 'id', 'count', 'groupID', 'compensation', 'iconSource', 'title', 'description', 'extra'))
-ItemPackEntry.__new__.__defaults__ = (None, None, None, None, None, None, '', '', None)
+ItemPackEntry.__new__.__defaults__ = (None,
+ None,
+ None,
+ None,
+ None,
+ None,
+ '',
+ '',
+ {})
+
+class _Enum(Enum):
+
+    @classmethod
+    def hasValue(cls, value):
+        return value in cls._value2member_map_
+
+
+@unique
+
+class TManLocation(_Enum):
+    NEWBIES = 'newbies'
+    BARRACKS = 'barracks'
+    TANKS = 'tanks'
+    DEMOBILIZED = 'demobilized'
+
+
+@unique
+
+class TManGender(_Enum):
+    MALE = 'male'
+    FEMALE = 'female'
+
 
 class ShopItemType(CONST_CONTAINER):
     VEHICLE = 'vehicle'
+    CREW = 'crew'
     EQUIPMENT = 'equipment'
     DEVICE = 'device'
     BOOSTER = 'booster'
@@ -157,9 +190,19 @@ class ItemPackTypeGroup(CONST_CONTAINER):
     TOKEN = (ItemPackType.TOKEN,)
     DISCOUNT = (ItemPackType.FRONTLINE_TOKEN,)
     TRADE_IN = (ItemPackType.TRADE_IN_INFO,)
+    CREW_BOOKS = (ItemPackType.CREW_BOOK,
+     ItemPackType.CREW_BOOK_BROCHURE,
+     ItemPackType.CREW_BOOK_GUIDE,
+     ItemPackType.CREW_BOOK_CREW_BOOK,
+     ItemPackType.CREW_BOOK_PERSONAL_BOOK,
+     ItemPackType.CREW_BOOK_UNIVERSAL_BOOK)
 
 
 CompensationSpec = namedtuple('CompensationSpec', ('type', 'value', 'count'))
+
+def getItemPackByGroupAndName(group, name, default = None):
+    return next((itemPackName for itemPackName in group if name in itemPackName), default)
+
 
 class CompensationType(CONST_CONTAINER):
     MONEY = 'money'

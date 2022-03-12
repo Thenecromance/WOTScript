@@ -50,7 +50,6 @@ from skeletons.gui.shared import IItemsCache
 from skeletons.gui.customization import ICustomizationService
 from nation_change.nation_change_helpers import hasNationGroup, iterVehTypeCDsInNationGroup
 from post_progression_common import TankSetupGroupsId
-from skeletons.new_year import INewYearController
 if typing.TYPE_CHECKING:
     from skeletons.gui.shared import IItemsRequester
     from items.components.c11n_components import StyleItem
@@ -238,7 +237,6 @@ class Vehicle(FittingItem):
     itemsCache = dependency.descriptor(IItemsCache)
     __customizationService = dependency.descriptor(ICustomizationService)
     __postProgressionCtrl = dependency.descriptor(IVehiclePostProgressionController)
-    nyController = dependency.descriptor(INewYearController)
 
     def __init__(self, strCompactDescr = None, inventoryID = -1, typeCompDescr = None, proxy = None, extData = None, invData = None):
         self.__postProgressionCtrl.processVehExtData(getVehicleType(typeCompDescr or strCompactDescr), extData)
@@ -287,7 +285,7 @@ class Vehicle(FittingItem):
         tradeInData = None
         personalTradeIn = None
         if proxy is not None and proxy.inventory.isSynced() and proxy.stats.isSynced() and proxy.shop.isSynced() and proxy.vehicleRotation.isSynced() and proxy.recycleBin.isSynced():
-            invDataTmp = proxy.inventory.getItems(GUI_ITEM_TYPE.VEHICLE, self._inventoryID)
+            invDataTmp = proxy.inventory.getItems(GUI_ITEM_TYPE.VEHICLE, inventoryID)
             if invDataTmp is not None:
                 invData = invDataTmp
             tradeInData = proxy.shop.tradeIn
@@ -568,9 +566,11 @@ class Vehicle(FittingItem):
 
     def createAppliedOutfits(self, proxy):
         styleOutfitData = proxy.inventory.getOutfitData(self.intCD, SeasonType.ALL)
+        styleProgressionLevel = 0
         if styleOutfitData is not None:
             self._isStyleInstalled = True
             styledOutfitComponent = customizations.parseCompDescr(styleOutfitData)
+            styleProgressionLevel = styledOutfitComponent.styleProgressionLevel
             styleIntCD = vehicles.makeIntCompactDescrByID('customizationItem', CustomizationType.STYLE, styledOutfitComponent.styleId)
             style = vehicles.getItemByCompactDescr(styleIntCD)
         else:
@@ -582,13 +582,13 @@ class Vehicle(FittingItem):
             else:
                 isCustomOutfitInstalled = any((proxy.inventory.getOutfitData(self.intCD, s) for s in SeasonType.SEASONS))
                 self._isStyleInstalled = not isCustomOutfitInstalled
-        self._outfitComponents = {season:self._getOutfitComponent(proxy, style, season) for season in SeasonType.SEASONS}
+        self._outfitComponents = {season:self._getOutfitComponent(proxy, style, styleProgressionLevel, season) for season in SeasonType.SEASONS}
         return
 
-    def _getOutfitComponent(self, proxy, style, season):
-        if style is not None and season != SeasonType.EVENT:
-            return self.__getStyledOutfitComponent(proxy, style, season)
-        elif self._isStyleInstalled and season != SeasonType.EVENT:
+    def _getOutfitComponent(self, proxy, style, styleProgressionLevel, season):
+        if style is not None:
+            return self.__getStyledOutfitComponent(proxy, style, styleProgressionLevel, season)
+        elif self._isStyleInstalled:
             return self.__getEmptyOutfitComponent()
         else:
             return self.__getCustomOutfitComponent(proxy, season)
@@ -617,10 +617,6 @@ class Vehicle(FittingItem):
     def getShopIcon(self, size = STORE_CONSTANTS.ICON_SIZE_MEDIUM):
         name = getNationLessName(self.name)
         return RES_SHOP_EXT.getVehicleIcon(size, name)
-
-    def getSnapshotIcon(self):
-        name = getIconResourceName(getNationLessName(self.name))
-        return RES_ICONS.getSnapshotIcon(name)
 
     @property
     def invID(self):
@@ -1015,20 +1011,20 @@ class Vehicle(FittingItem):
         return not self.descriptor.isWeightConsistent()
 
     @property
-    def hasShells(self):
-        return sum((s.count for s in self.shells.installed.getItems())) > 0
-
-    @property
     def hasCrew(self):
         return findFirst(lambda x: x[1] is not None, self.crew) is not None
 
     @property
+    def hasShells(self):
+        return self.shells.setupLayouts.isAmmoFull(minAmmo=1)
+
+    @property
     def hasConsumables(self):
-        return findFirst(None, self.consumables.installed) is not None
+        return bool(self.consumables.setupLayouts.getUniqueItems())
 
     @property
     def hasOptionalDevices(self):
-        return findFirst(None, self.optDevices.installed) is not None
+        return bool(self.optDevices.setupLayouts.getUniqueItems())
 
     @property
     def modelState(self):
@@ -1885,17 +1881,20 @@ class Vehicle(FittingItem):
         else:
             return self.__getEmptyOutfitComponent()
 
-    def __getStyledOutfitComponent(self, proxy, style, season):
-        componentProgression = 0
-        if style.progression:
-            progressionData = self.itemsCache.items.inventory.getC11nProgressionDataForItem(style.compactDescr)
-            if progressionData is not None:
-                vehCD = self.intCD if style.progression.autobound else 0
-                vehProgressionData = progressionData.get(vehCD, None)
-                if vehProgressionData is not None:
-                    componentProgression = vehProgressionData.currentLevel
+    def __getStyledOutfitComponent(self, proxy, style, styleProgressionLevel, season):
         component = deepcopy(style.outfits.get(season))
-        component.styleProgressionLevel = componentProgression
+        if style.progression:
+            if not style.isProgressionRewindEnabled:
+                componentProgression = 0
+                progressionData = self.itemsCache.items.inventory.getC11nProgressionDataForItem(style.compactDescr)
+                if progressionData is not None:
+                    vehCD = self.intCD if style.progression.autobound else 0
+                    vehProgressionData = progressionData.get(vehCD, None)
+                    if vehProgressionData is not None:
+                        componentProgression = vehProgressionData.currentLevel
+                    component.styleProgressionLevel = componentProgression
+            else:
+                component.styleProgressionLevel = styleProgressionLevel
         if ItemTags.ADD_NATIONAL_EMBLEM in style.tags:
             emblems = createNationalEmblemComponents(self._descriptor)
             component.decals.extend(emblems)
@@ -1963,15 +1962,6 @@ def getIconShopPath(vehicleName, size = STORE_CONSTANTS.ICON_SIZE_MEDIUM):
         return func_utils.makeFlashPath(path)
     else:
         return '../maps/shop/vehicles/%s/empty_tank.png' % size
-
-
-def getShopIconResource(vehicleName, size = STORE_CONSTANTS.ICON_SIZE_MEDIUM):
-    rName = getNationLessName(vehicleName=vehicleName)
-    image = R.images.gui.maps.shop.vehicles.dyn('c_{}'.format(size)).dyn(rName)
-    if image.isValid():
-        return image()
-    else:
-        return None
 
 
 def getIconResource(vehicleName):

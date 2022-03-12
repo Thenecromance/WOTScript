@@ -1,5 +1,6 @@
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/lobby/prb_windows/BattleSessionWindow.py
 import functools
+import logging
 import BigWorld
 from account_helpers.AccountSettings import CLAN_PREBATTLE_SORTING_KEY
 from gui.impl import backport
@@ -21,10 +22,13 @@ from gui.prb_control.settings import PREBATTLE_ROSTER, REQUEST_TYPE, PREBATTLE_S
 from gui.shared import events, EVENT_BUS_SCOPE
 from gui.shared.formatters import text_styles
 from gui.shared.utils import functions
-from helpers import time_utils, i18n
+from helpers import time_utils, i18n, dependency
+from skeletons.gui.web import IWebController
 _R_SORT = R.strings.prebattle.labels.sort
+_logger = logging.getLogger(__name__)
 
 class BattleSessionWindow(BattleSessionWindowMeta):
+    __webCtrl = dependency.descriptor(IWebController)
     START_TIME_SYNC_PERIOD = 10
     NATION_ICON_PATH = '../maps/icons/filters/nations/%(nation)s.png'
     __SORTINGS_AND_COMPARATORS = [(_R_SORT.byOrder(), PREBATTLE_PLAYERS_COMPARATORS.OBSERVERS_TO_BOTTOM, PREBATTLE_PLAYERS_COMPARATORS.REGULAR),
@@ -60,7 +64,15 @@ class BattleSessionWindow(BattleSessionWindowMeta):
         if team1State.isInQueue():
             self._closeSendInvitesWindow()
 
+    def isPlayerReady(self):
+        return self._isInLegacyPreBattle() and super(BattleSessionWindow, self).isPlayerReady()
+
+    def isLeaveBtnEnabled(self):
+        return self._isInLegacyPreBattle() and super(BattleSessionWindow, self).isLeaveBtnEnabled()
+
     def isReadyBtnEnabled(self):
+        if not self._isInLegacyPreBattle():
+            return False
         result = super(BattleSessionWindow, self).isReadyBtnEnabled()
         if self.__isTurnamentBattle:
             result = result and self.__isCurrentPlayerInAssigned()
@@ -76,13 +88,13 @@ class BattleSessionWindow(BattleSessionWindowMeta):
         super(BattleSessionWindow, self).onPlayerStateChanged(entity, roster, playerInfo)
         rosters = entity.getRosters()
         self._setRosterList(rosters)
-        self.as_setInfoS(self.__isTurnamentBattle, self.__battlesWinsString, self.__arenaName, self.__firstTeam, self.__secondTeam, self.prbEntity.getProps().getBattlesScore(), self.__eventName, self.__sessionName)
+        self.as_setInfoS(self.__isTurnamentBattle, self.__battlesWinsString, self.__arenaName, self.__firstTeam, self.__secondTeam, self.prbEntity.getProps().getBattlesScore(), self.__eventName, self.__sessionName, self.__detachment, self.__vehicleLvl, self.__teamIndex)
         self.__updateCommonRequirements(entity.getTeamLimits(), rosters)
 
     def onSettingUpdated(self, entity, settingName, settingValue):
         if settingName == PREBATTLE_SETTING_NAME.ARENA_TYPE_ID:
             self.__arenaName = functions.getArenaShortName(settingValue)
-            self.as_setInfoS(self.__isTurnamentBattle, self.__battlesWinsString, self.__arenaName, self.__firstTeam, self.__secondTeam, self.prbEntity.getProps().getBattlesScore(), self.__eventName, self.__sessionName)
+            self.as_setInfoS(self.__isTurnamentBattle, self.__battlesWinsString, self.__arenaName, self.__firstTeam, self.__secondTeam, self.prbEntity.getProps().getBattlesScore(), self.__eventName, self.__sessionName, self.__detachment, self.__vehicleLvl, self.__teamIndex)
 
     def onPropertyUpdated(self, entity, propertyName, propertyValue):
         if propertyName == PREBATTLE_PROPERTY_NAME.TEAMS_POSITIONS:
@@ -216,15 +228,18 @@ class BattleSessionWindow(BattleSessionWindowMeta):
 
     def _populate(self):
         super(BattleSessionWindow, self)._populate()
-        rosters = self.prbEntity.getRosters()
-        teamLimits = self.prbEntity.getTeamLimits()
-        self.__setSorting()
-        self.__syncStartTime()
-        self._setRosterList(rosters)
-        self.__updateCommonRequirements(teamLimits, rosters)
-        self.as_setInfoS(self.__isTurnamentBattle, self.__battlesWinsString, self.__arenaName, self.__firstTeam, self.__secondTeam, self.prbEntity.getProps().getBattlesScore(), self.__eventName, self.__sessionName)
-        self.__updateLimits(teamLimits, rosters)
-        self.__showAttackDirection()
+        if self._isInLegacyPreBattle():
+            rosters = self.prbEntity.getRosters()
+            teamLimits = self.prbEntity.getTeamLimits()
+            self.__setSorting()
+            self.__syncStartTime()
+            self._setRosterList(rosters)
+            self.__updateCommonRequirements(teamLimits, rosters)
+            self.as_setInfoS(self.__isTurnamentBattle, self.__battlesWinsString, self.__arenaName, self.__firstTeam, self.__secondTeam, self.prbEntity.getProps().getBattlesScore(), self.__eventName, self.__sessionName, self.__detachment, self.__vehicleLvl, self.__teamIndex)
+            self.__updateLimits(teamLimits, rosters)
+            self.__showAttackDirection()
+        else:
+            _logger.debug('Battle session view loaded, but prebattle already destroyed')
 
     def _dispose(self):
         self.__team = None
@@ -300,6 +315,8 @@ class BattleSessionWindow(BattleSessionWindowMeta):
         extraData = settings[PREBATTLE_SETTING_NAME.EXTRA_DATA]
         self.__arenaName = functions.getArenaShortName(settings[PREBATTLE_SETTING_NAME.ARENA_TYPE_ID])
         self.__firstTeam, self.__secondTeam = formatters.getPrebattleOpponents(extraData)
+        clanDBID = self.__webCtrl.getClanDbID()
+        self.__detachment, self.__vehicleLvl, self.__teamIndex = formatters.getBattleSessionDetachment(extraData, clanDBID)
         battlesLimit = settings[PREBATTLE_SETTING_NAME.BATTLES_LIMIT]
         winsLimit = settings[PREBATTLE_SETTING_NAME.WINS_LIMIT]
         self.__battlesWinsString = '%d/%s' % (battlesLimit, str(winsLimit or '-'))

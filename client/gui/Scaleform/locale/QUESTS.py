@@ -12,6 +12,7 @@ class QUESTS(object):
     MISSIONS_TAB_DAILY = '#quests:missions/tab/daily'
     MISSIONS_TAB_MAPBOX = '#quests:missions/tab/mapbox'
     MISSIONS_TAB_MAY21_MARATHON = '#quests:missions/tab/may21_marathon'
+    MISSIONS_TAB_LUNAR_MARATHON = '#quests:missions/tab/lunar_marathon'
     IGR_TOOLTIP_BATTLESLABEL = '#quests:igr/tooltip/battlesLabel'
     IGR_TOOLTIP_WINSLABEL = '#quests:igr/tooltip/winsLabel'
     POSTBATTLE_PROGRESSRESET = '#quests:postBattle/progressReset'
@@ -75,10 +76,6 @@ class QUESTS(object):
     BONUSES_ITEM_TANKMEN_NO_SKILLS = '#quests:bonuses/item/tankmen/no_skills'
     BONUSES_ITEM_TANKMEN_WITH_SKILLS = '#quests:bonuses/item/tankmen/with_skills'
     BONUSES_NOTAVAILABLE = '#quests:bonuses/notAvailable'
-    BONUSNAME_NY22FILLERS = '#quests:bonusName/ny22Fillers'
-    BONUSNAME_NEWYEARSLOT = '#quests:bonusName/newYearSlot'
-    BONUSES_VARIADICDISCOUNT_DISCOUNTAMOUNT = '#quests:bonuses/variadicDiscount/discountAmount'
-    BONUSES_VARIADICDISCOUNT_BUTTONLABEL = '#quests:bonuses/variadicDiscount/buttonLabel'
     QUESTS_TITLE = '#quests:quests/title'
     QUESTS_TITLE_MANEUVERSQUESTS = '#quests:quests/title/maneuversQuests'
     QUESTS_TITLE_CURRENTLYAVAILABLE = '#quests:quests/title/currentlyAvailable'
@@ -1250,8 +1247,7 @@ class QUESTS(object):
     BONUSNAME_RANKEDBONUSBATTLES = '#quests:bonusName/rankedBonusBattles'
     BONUSNAME_ENTITLEMENTS_TESTENTITLEMENT = '#quests:bonusName/entitlements/testEntitlement'
     BONUSNAME_ENTITLEMENTS_RANKED_2020_DISCOUNT = '#quests:bonusName/entitlements/ranked_2020_discount'
-    BONUSNAME_ENTITLEMENTS_RANKED_202201_ACCESS = '#quests:bonusName/entitlements/ranked_202201_access'
-    BONUSNAME_ENTITLEMENTS_GIFTSYSTEM_2_NYSTAMP = '#quests:bonusName/entitlements/giftSystem_2_nyStamp'
+    BONUSNAME_ENTITLEMENTS_RANKED_202203_ACCESS = '#quests:bonusName/entitlements/ranked_202203_access'
     BONUSNAME_BATTLE_BONUS_X5 = '#quests:bonusName/battle_bonus_x5'
     BONUSNAME_BATTLEPASSPOINTS = '#quests:bonusName/battlePassPoints'
     BONUSNAME_BATTLEPASSPOINTS_PREVIEW = '#quests:bonusName/battlePassPoints/preview'
@@ -1639,11 +1635,9 @@ class QUESTS(object):
     GENERAL_INFO_BACK_TITLE = '#quests:general/info/back/title'
     GENERAL_INFO_BACK_GOTO = '#quests:general/info/back/goto'
     DAILYQUESTS_INFO_DAILYMISSIONS = '#quests:dailyQuests/info/dailyMissions'
-    DAILYQUESTS_INFO_NYDAILYMISSIONS = '#quests:dailyQuests/info/NYDailyMissions'
     DAILYQUESTS_INFO_DAILYMISSIONTITLE = '#quests:dailyQuests/info/dailyMissionTitle'
     DAILYQUESTS_INFO_BATTLEPASSDAILYMISSIONS = '#quests:dailyQuests/info/battlePassDailyMissions'
     DAILYQUESTS_INFO_BATTLEPASSDAILYMISSIONTITLE = '#quests:dailyQuests/info/battlePassDailyMissionTitle'
-    DAILYQUESTS_INFO_GIFTSYSTEMDISABLEDDAILYMISSIONS = '#quests:dailyQuests/info/giftSystemDisabledDailyMissions'
     PREMIUMQUESTS_INFO_PREMIUMMISSIONS = '#quests:premiumQuests/info/premiumMissions'
     PREMIUMQUESTS_INFO_PREMIUMMISSIONSTITLE = '#quests:premiumQuests/info/premiumMissionsTitle'
     PREMIUMQUESTS_INFO_CONDITIONS = '#quests:premiumQuests/info/conditions'
@@ -1678,6 +1672,9 @@ class QUESTS(object):
     DAILYQUESTS_CONDITION_DESTROYVEH_FEW_ACCUM = '#quests:dailyQuests/condition/destroyVeh_few_accum'
     DAILYQUESTS_CONDITION_DESTROYVEH_PLURAL_ACCUM = '#quests:dailyQuests/condition/destroyVeh_plural_accum'
     DETAILS_CONDITIONS_CUMULATIVE_DAMAGEDHP = '#quests:details/conditions/cumulative/damagedHp'
+    MISSIONS_TAB_LABEL_LUNAR_MARATHON = '#quests:missions/tab/label/lunar_marathon'
+    MISSIONS_TAB_LUNAR_MARATHON_HEADER = '#quests:missions/tab/lunar_marathon/header'
+    MISSIONS_TAB_LUNAR_MARATHON_BODY = '#quests:missions/tab/lunar_marathon/body'
     TOKEN_DEFAULT_ENUM = (TOKEN_DEFAULT_USSR,
      TOKEN_DEFAULT_GERMANY,
      TOKEN_DEFAULT_USA,
@@ -1713,8 +1710,6 @@ class QUESTS(object):
      BONUSNAME_BLUEPRINTS_NATION,
      BONUSNAME_BLUEPRINTS_NATION_ANY,
      BONUSNAME_BLUEPRINTS_UNIVERSAL,
-     BONUSNAME_NY22FILLERS,
-     BONUSNAME_NEWYEARSLOT,
      BONUSNAME_CREDITS,
      BONUSNAME_GOLD,
      BONUSNAME_CRYSTAL,
@@ -1781,8 +1776,7 @@ class QUESTS(object):
      BONUSNAME_RANKEDBONUSBATTLES,
      BONUSNAME_ENTITLEMENTS_TESTENTITLEMENT,
      BONUSNAME_ENTITLEMENTS_RANKED_2020_DISCOUNT,
-     BONUSNAME_ENTITLEMENTS_RANKED_202201_ACCESS,
-     BONUSNAME_ENTITLEMENTS_GIFTSYSTEM_2_NYSTAMP,
+     BONUSNAME_ENTITLEMENTS_RANKED_202203_ACCESS,
      BONUSNAME_BATTLE_BONUS_X5,
      BONUSNAME_BATTLEPASSPOINTS,
      BONUSNAME_BATTLEPASSPOINTS_PREVIEW)

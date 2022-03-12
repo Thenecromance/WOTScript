@@ -174,7 +174,7 @@ class BattleEntry(AppEntry):
         pass
 
     def _getRequiredLibraries(self):
-        return ('windows.swf', 'popovers.swf', 'guiControlsLobbyBattleDynamic.swf', 'guiControlsLoginBattleDynamic.swf', 'guiControlsBattleDynamic.swf', 'battleMessages.swf')
+        return ('windows.swf', 'common_i18n.swf', 'popovers.swf', 'guiControlsLobbyBattleDynamic.swf', 'guiControlsLoginBattleDynamic.swf', 'guiControlsBattleDynamic.swf', 'battleMessages.swf')
 
     def __getCursorFromContainer(self):
         if self._containerMgr is not None:

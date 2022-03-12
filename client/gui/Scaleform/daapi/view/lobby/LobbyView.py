@@ -13,12 +13,12 @@ from gui.Scaleform.genConsts.PERSONAL_MISSIONS_ALIASES import PERSONAL_MISSIONS_
 from gui.Scaleform.genConsts.PREBATTLE_ALIASES import PREBATTLE_ALIASES
 from gui.Scaleform.genConsts.RANKEDBATTLES_ALIASES import RANKEDBATTLES_ALIASES
 from gui.Scaleform.locale.SYSTEM_MESSAGES import SYSTEM_MESSAGES
+from gui.hangar_cameras.hangar_camera_common import CameraRelatedEvents
 from gui.impl import backport
 from gui.prb_control.dispatcher import g_prbLoader
 from gui.shared import EVENT_BUS_SCOPE, events, g_eventBus
 from gui.shared.events import LoadViewEvent, ViewEventType
-from gui.hangar_cameras.hangar_camera_common import CameraRelatedEvents
-from helpers import i18n, dependency, uniprof
+from helpers import dependency, i18n, uniprof
 from messenger.m_constants import PROTO_TYPE
 from messenger.proto import proto_getter
 from skeletons.gui.app_loader import IWaitingWidget
@@ -39,7 +39,6 @@ class _LobbySubViewsLifecycleHandler(IViewLifecycleHandler):
      VIEW_ALIAS.IMAGE_VIEW,
      VIEW_ALIAS.VEHICLE_PREVIEW,
      VIEW_ALIAS.STYLE_PREVIEW,
-     VIEW_ALIAS.BLUEPRINTS_EXCHANGE_STYLE_PREVIEW,
      VIEW_ALIAS.VEHICLE_COMPARE,
      VIEW_ALIAS.LOBBY_PERSONAL_MISSIONS,
      PERSONAL_MISSIONS_ALIASES.PERSONAL_MISSIONS_OPERATIONS,
@@ -134,8 +133,6 @@ class LobbyView(LobbyPageMeta, IWaitingWidget):
         self.addListener(events.GameEvent.SCREEN_SHOT_MADE, self.__handleScreenShotMade, EVENT_BUS_SCOPE.GLOBAL)
         self.addListener(events.GameEvent.HIDE_LOBBY_SUB_CONTAINER_ITEMS, self.__hideSubContainerItems, EVENT_BUS_SCOPE.GLOBAL)
         self.addListener(events.GameEvent.REVEAL_LOBBY_SUB_CONTAINER_ITEMS, self.__revealSubContainerItems, EVENT_BUS_SCOPE.GLOBAL)
-        self.addListener(events.LobbySimpleEvent.TURN_LOBBY_DRAGGING_ON, self.__turnLobbyDraggingOn, EVENT_BUS_SCOPE.LOBBY)
-        self.addListener(events.LobbySimpleEvent.TURN_LOBBY_DRAGGING_OFF, self.__turnLobbyDraggingOff, EVENT_BUS_SCOPE.LOBBY)
         g_playerEvents.onEntityCheckOutEnqueued += self._onEntityCheckoutEnqueued
         g_playerEvents.onAccountBecomeNonPlayer += self._onAccountBecomeNonPlayer
         viewLifecycleHandler = _LobbySubViewsLifecycleHandler()
@@ -165,8 +162,6 @@ class LobbyView(LobbyPageMeta, IWaitingWidget):
         self.removeListener(events.GameEvent.SCREEN_SHOT_MADE, self.__handleScreenShotMade, EVENT_BUS_SCOPE.GLOBAL)
         self.removeListener(events.GameEvent.HIDE_LOBBY_SUB_CONTAINER_ITEMS, self.__hideSubContainerItems, EVENT_BUS_SCOPE.GLOBAL)
         self.removeListener(events.GameEvent.REVEAL_LOBBY_SUB_CONTAINER_ITEMS, self.__revealSubContainerItems, EVENT_BUS_SCOPE.GLOBAL)
-        self.removeListener(events.LobbySimpleEvent.TURN_LOBBY_DRAGGING_ON, self.__turnLobbyDraggingOn, EVENT_BUS_SCOPE.LOBBY)
-        self.removeListener(events.LobbySimpleEvent.TURN_LOBBY_DRAGGING_OFF, self.__turnLobbyDraggingOff, EVENT_BUS_SCOPE.LOBBY)
         View._dispose(self)
         return
 
@@ -212,9 +207,3 @@ class LobbyView(LobbyPageMeta, IWaitingWidget):
         elif roomType in [constants.IGR_TYPE.BASE, constants.IGR_TYPE.NONE] and self.__currIgrType == constants.IGR_TYPE.PREMIUM:
             SystemMessages.pushMessage(i18n.makeString(SYSTEM_MESSAGES.IGR_CUSTOMIZATION_END, igrIcon=icon), type=SystemMessages.SM_TYPE.Information)
         self.__currIgrType = roomType
-
-    def __turnLobbyDraggingOn(self, _):
-        self.as_switchLobbyDraggingS(True)
-
-    def __turnLobbyDraggingOff(self, _):
-        self.as_switchLobbyDraggingS(False)

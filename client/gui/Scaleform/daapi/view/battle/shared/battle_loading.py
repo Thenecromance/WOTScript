@@ -1,5 +1,4 @@
 # Embedded file name: scripts/client/gui/Scaleform/daapi/view/battle/shared/battle_loading.py
-import logging
 import BattleReplay
 from account_helpers.settings_core import settings_constants
 from account_helpers.settings_core.options import BattleLoadingTipSetting
@@ -14,7 +13,6 @@ from skeletons.gui.battle_session import IBattleSessionProvider
 from skeletons.gui.impl import IGuiLoader
 from skeletons.gui.lobby_context import ILobbyContext
 __bBattleLoadingShowed = False
-_logger = logging.getLogger(__name__)
 
 def isBattleLoadingShowed():
     global __bBattleLoadingShowed

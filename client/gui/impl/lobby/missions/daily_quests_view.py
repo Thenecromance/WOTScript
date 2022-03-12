@@ -1,13 +1,8 @@
 # Embedded file name: scripts/client/gui/impl/lobby/missions/daily_quests_view.py
 import typing
 import logging
-from account_helpers import AccountSettings
-from account_helpers.AccountSettings import NY_DAILY_QUESTS_VISITED, NY_BONUS_DAILY_QUEST_VISITED
 from constants import PREMIUM_TYPE, PremiumConfigs, DAILY_QUESTS_CONFIG
 from frameworks.wulf import Array, ViewFlags, ViewSettings
-from gifts.gifts_common import GiftEventID
-from gui.gift_system.constants import HubUpdateReason
-from gui.gift_system.mixins import GiftEventHubWatcher
 from gui.Scaleform.daapi.view.lobby.store.browser.shop_helpers import getBuyPremiumUrl
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.battle_pass.battle_pass_helpers import showBattlePassDailyQuestsIntro
@@ -33,8 +28,7 @@ from gui.shared.utils import decorators
 from helpers import dependency, time_utils
 from skeletons.gui.lobby_context import ILobbyContext
 from skeletons.gui.server_events import IEventsCache
-from skeletons.gui.game_control import IGameSessionController, IBattlePassController, IFestivityController
-from skeletons.new_year import INewYearController
+from skeletons.gui.game_control import IGameSessionController, IBattlePassController
 from skeletons.gui.shared import IItemsCache
 if typing.TYPE_CHECKING:
     from typing import Optional, List
@@ -57,15 +51,12 @@ def _isPremiumPlusAccount(itemsCache = None):
     return itemsCache.items.stats.isActivePremium(PREMIUM_TYPE.PLUS)
 
 
-class DailyQuestsView(ViewImpl, GiftEventHubWatcher):
+class DailyQuestsView(ViewImpl):
     eventsCache = dependency.descriptor(IEventsCache)
     gameSession = dependency.descriptor(IGameSessionController)
     itemsCache = dependency.descriptor(IItemsCache)
     lobbyContext = dependency.descriptor(ILobbyContext)
     battlePassController = dependency.descriptor(IBattlePassController)
-    _GIFT_EVENT_ID = GiftEventID.NY_HOLIDAYS
-    __festivityController = dependency.descriptor(IFestivityController)
-    __nyController = dependency.descriptor(INewYearController)
     __slots__ = ('__tooltipData', '__proxyMissionsPage')
 
     def __init__(self, layoutID = R.views.lobby.missions.Daily()):
@@ -138,21 +129,12 @@ class DailyQuestsView(ViewImpl, GiftEventHubWatcher):
 
     def _onLoading(self, *args, **kwargs):
         _logger.info('DailyQuestsView::_onLoading')
-        self.catchGiftEventHub(autoSub=False)
         with self.viewModel.transaction() as tx:
-            if not AccountSettings.getUIFlag(NY_DAILY_QUESTS_VISITED) and self.__festivityController.isEnabled():
-                self._updateLootboxesIntro(tx)
             self._updateQuestsTitles(tx)
             self._updateModel(tx)
             self._updateCountDowns(tx)
             tx.setPremMissionsTabDiscovered(settings.getDQSettings().premMissionsTabDiscovered)
             tx.setIsBattlePassActive(self.battlePassController.isActive())
-            tx.setIsGiftSystemDisabled(self.isGiftEventDisabled())
-            tx.setIsNewYearAvailable(self.__nyController.isEnabled())
-
-    @staticmethod
-    def _updateLootboxesIntro(model):
-        model.setIsLootboxesIntroVisible(True)
 
     def _onLoaded(self, *args, **kwargs):
         showBattlePassDailyQuestsIntro()
@@ -187,14 +169,6 @@ class DailyQuestsView(ViewImpl, GiftEventHubWatcher):
             self.__updateQuestsInModel(tx.getQuests(), quests)
             self.__updateMissionVisitedArray(tx.getMissionsCompletedVisited(), quests)
             tx.setBonusMissionVisited(not newBonusQuests)
-            if self.__festivityController.isEnabled():
-                if not AccountSettings.getUIFlag(NY_DAILY_QUESTS_VISITED):
-                    tx.setPlayNYQuestLootboxAnimation(True)
-                    AccountSettings.setUIFlag(NY_DAILY_QUESTS_VISITED, True)
-                if not AccountSettings.getUIFlag(NY_BONUS_DAILY_QUEST_VISITED) and not tx.getBonusMissionVisited():
-                    tx.setPlayNYBonusQuestLootboxAnimation(True)
-                    AccountSettings.setUIFlag(NY_DAILY_QUESTS_VISITED, True)
-                    AccountSettings.setUIFlag(NY_BONUS_DAILY_QUEST_VISITED, True)
 
     def _updateEpicQuestModel(self, model, fullUpdate = False):
         _logger.debug('DailyQuestsView::_updateEpicQuestModel')
@@ -246,10 +220,6 @@ class DailyQuestsView(ViewImpl, GiftEventHubWatcher):
             self.__updateQuestsInModel(missionsModel, quests)
             self.__updateMissionVisitedArray(tx.getMissionsCompletedVisited(), quests)
 
-    def _onGiftHubUpdate(self, reason, _ = None):
-        if reason == HubUpdateReason.SETTINGS:
-            self.viewModel.setIsGiftSystemDisabled(self.isGiftEventDisabled())
-
     def _onPremiumTypeChanged(self, _):
         with self.viewModel.transaction() as tx:
             self._updatePremiumMissionsModel(tx)
@@ -280,6 +250,7 @@ class DailyQuestsView(ViewImpl, GiftEventHubWatcher):
                     self._updateDailyQuestModel(tx)
                     if not dqDiff['enabled']:
                         self.__setCurrentTab(DailyTabs.PREMIUM_MISSIONS, tx)
+                self.__triggerSyncInitiator(self.viewModel.dailyQuests)
         if PremiumConfigs.PREM_QUESTS in diff:
             premDiff = diff[PremiumConfigs.PREM_QUESTS]
             stateChanged = 'enabled' in premDiff and premDiff['enabled'] is not self.viewModel.premiumMissions.getIsEnabled()
@@ -288,6 +259,10 @@ class DailyQuestsView(ViewImpl, GiftEventHubWatcher):
                     self._updatePremiumMissionsModel(tx)
                     if not premDiff['enabled']:
                         self.__setCurrentTab(DailyTabs.QUESTS, tx)
+                    self.__triggerSyncInitiator(self.viewModel.premiumMissions)
+
+    def __triggerSyncInitiator(self, model):
+        model.setSyncInitiator((model.getSyncInitiator() + 1) % 1000)
 
     def _updateQuestsTitles(self, model):
         model.premiumMissions.setTitle(R.strings.quests.premiumQuests.header.title())
@@ -396,36 +371,27 @@ class DailyQuestsView(ViewImpl, GiftEventHubWatcher):
     def __onRerollEnabled(self):
         self.viewModel.dailyQuests.setRerollCountDown(0)
 
-    def __onLootboxesIntroClosed(self):
-        self.viewModel.setIsLootboxesIntroVisible(False)
-
     def __addListeners(self):
-        self.catchGiftEventHub()
         self.viewModel.onBuyPremiumBtnClick += self.__onBuyPremiumBtn
         self.viewModel.onTabClick += self.__onTabClick
         self.viewModel.onInfoToggle += self.__onInfoToggle
         self.viewModel.onClose += self.__onCloseView
         self.viewModel.onReroll += self.__onReRoll
         self.viewModel.onRerollEnabled += self.__onRerollEnabled
-        self.viewModel.onLootboxesIntroClosed += self.__onLootboxesIntroClosed
         self.eventsCache.onSyncCompleted += self._onSyncCompleted
         self.gameSession.onPremiumTypeChanged += self._onPremiumTypeChanged
         self.lobbyContext.getServerSettings().onServerSettingsChange += self._onServerSettingsChanged
-        self.__nyController.onStateChanged += self.__onNYStateChanged
 
     def __removeListeners(self):
-        self.releaseGiftEventHub()
         self.viewModel.onBuyPremiumBtnClick -= self.__onBuyPremiumBtn
         self.viewModel.onTabClick -= self.__onTabClick
         self.viewModel.onInfoToggle -= self.__onInfoToggle
         self.viewModel.onClose -= self.__onCloseView
         self.viewModel.onReroll -= self.__onReRoll
         self.viewModel.onRerollEnabled -= self.__onRerollEnabled
-        self.viewModel.onLootboxesIntroClosed -= self.__onLootboxesIntroClosed
         self.eventsCache.onSyncCompleted -= self._onSyncCompleted
         self.gameSession.onPremiumTypeChanged -= self._onPremiumTypeChanged
         self.lobbyContext.getServerSettings().onServerSettingsChange -= self._onServerSettingsChanged
-        self.__nyController.onStateChanged -= self.__onNYStateChanged
 
     def __updateQuestsInModel(self, questsInModelToUpdate, sortedNewQuests):
         _logger.debug('DailyQuestsView::__updateQuestsInModel')
@@ -451,8 +417,3 @@ class DailyQuestsView(ViewImpl, GiftEventHubWatcher):
             missionVisitedArray.addBool(missionCompletedVisited)
 
         missionVisitedArray.invalidate()
-
-    def __onNYStateChanged(self, *args):
-        with self.viewModel.transaction() as model:
-            model.setIsNewYearAvailable(self.__nyController.isEnabled())
-            model.setIsLootboxesIntroVisible(self.__nyController.isEnabled())

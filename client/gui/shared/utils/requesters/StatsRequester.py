@@ -1,5 +1,6 @@
 # Embedded file name: scripts/client/gui/shared/utils/requesters/StatsRequester.py
 from collections import namedtuple
+import json
 import BigWorld
 from account_helpers.premium_info import PremiumInfo
 from adisp import async
@@ -266,6 +267,14 @@ class StatsRequester(AbstractSyncDataRequester, IStatsRequester):
         if gfKey in spaDict:
             result = int(spaDict[gfKey])
         return result
+
+    def getTelecomBundleId(self):
+        for key, attrValue in self.SPA.iteritems():
+            if key.startswith(SPA_ATTRS.RSS):
+                value = json.loads(attrValue)
+                return value['bundleID']
+
+        return None
 
     @property
     def tutorialsCompleted(self):

@@ -3,63 +3,47 @@ from collections import defaultdict
 import typing
 import BigWorld
 from CurrentVehicle import g_currentVehicle
-from account_helpers.settings_core.settings_constants import BattlePassStorageKeys
 from adisp import process
 from async import async, await
-from debug_utils import LOG_ERROR, LOG_DEBUG
-from gifts.gifts_common import GiftEventID
-from gui import DialogsInterface, makeHtmlString, SystemMessages
-from gui.Scaleform.daapi.view.lobby.store.browser.shop_helpers import getPlayerSeniorityAwardsUrl
-from gui.battle_pass.battle_pass_helpers import showOfferByBonusName
+from debug_utils import LOG_DEBUG, LOG_ERROR
+from gui import DialogsInterface, SystemMessages, makeHtmlString
 from gui.Scaleform.daapi.settings.views import VIEW_ALIAS
 from gui.Scaleform.daapi.view.lobby.customization.shared import CustomizationTabs
+from gui.Scaleform.daapi.view.lobby.store.browser.shop_helpers import getPlayerSeniorityAwardsUrl, getBattlePassCoinProductsUrl
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
+from gui.Scaleform.genConsts.BARRACKS_CONSTANTS import BARRACKS_CONSTANTS
 from gui.Scaleform.genConsts.FORTIFICATION_ALIASES import FORTIFICATION_ALIASES
 from gui.Scaleform.genConsts.QUESTS_ALIASES import QUESTS_ALIASES
-from gui.Scaleform.genConsts.BARRACKS_CONSTANTS import BARRACKS_CONSTANTS
 from gui.battle_results import RequestResultsContext
 from gui.clans.clan_helpers import showAcceptClanInviteDialog
-from gui.impl.new_year.navigation import ViewAliases
-from gui.customization.constants import CustomizationModes, CustomizationModeSource
+from gui.customization.constants import CustomizationModeSource, CustomizationModes
 from gui.impl import backport
 from gui.impl.gen import R
-from gui.impl.lobby.loot_box.loot_box_helper import showLootBoxSpecialMultiOpen
-from gui.impl.new_year.new_year_helper import extractCollectionsRewards
 from gui.platform.base.statuses.constants import StatusTypes
-from gui.prb_control import prbInvitesProperty, prbDispatcherProperty
+from gui.prb_control import prbDispatcherProperty, prbInvitesProperty
 from gui.ranked_battles import ranked_helpers
-from gui.server_events.events_dispatcher import showPersonalMission, showMissionsBattlePassCommonProgression, showBattlePass3dStyleChoiceWindow, showMissionsMapboxProgression
-from gui.shared import g_eventBus, events, actions, EVENT_BUS_SCOPE, event_dispatcher as shared_events
-from gui.shared.event_dispatcher import showProgressiveRewardWindow, showRankedYearAwardWindow, showBlueprintsSalePage, showShop, showSteamConfirmEmailOverlay, showNewYearVehiclesView, showNyCollectionCongratsWindow
-from gui.shared.event_dispatcher import showLootBoxAutoOpenWindow
-from gui.shared.gui_items.loot_box import NewYearLootBoxes
-from gui.shared.gui_items.processors.loot_boxes import LootBoxOpenProcessor
+from gui.server_events.events_dispatcher import showMissionsBattlePass, showMissionsMapboxProgression, showPersonalMission
+from gui.shared import EVENT_BUS_SCOPE, actions, event_dispatcher as shared_events, events, g_eventBus
+from gui.shared.event_dispatcher import showBlueprintsSalePage, showProgressiveRewardWindow, showRankedYearAwardWindow, showShop, showSteamConfirmEmailOverlay, hideWebBrowserOverlay
 from gui.shared.notifications import NotificationPriorityLevel
 from gui.shared.utils import decorators
 from gui.wgcg.clan import contexts as clan_ctxs
 from gui.wgnc import g_wgncProvider
-from new_year.ny_navigation_helper import switchNewYearView, showLootBox
-from shared_utils import findFirst
-from skeletons.account_helpers.settings_core import ISettingsCore
-from skeletons.gui.impl import INotificationWindowController
-from new_year.ny_constants import AnchorNames
-from skeletons.gui.platform.wgnp_controllers import IWGNPSteamAccRequestController
-from skeletons.gui.shared import IItemsCache
-from skeletons.new_year import INewYearController
-from web.web_client_api import webApiCollection
-from web.web_client_api.sound import HangarSoundWebApi
 from helpers import dependency
 from messenger.m_constants import PROTO_TYPE
 from messenger.proto import proto_getter
-from notification.settings import NOTIFICATION_TYPE, NOTIFICATION_BUTTON_STATE
-from notification.tutorial_helper import TutorialGlobalStorage, TUTORIAL_GLOBAL_VAR
+from notification.settings import NOTIFICATION_BUTTON_STATE, NOTIFICATION_TYPE
+from notification.tutorial_helper import TUTORIAL_GLOBAL_VAR, TutorialGlobalStorage
 from predefined_hosts import g_preDefinedHosts
 from skeletons.gui.battle_results import IBattleResultsService
-from skeletons.gui.game_control import IBrowserController, IRankedBattlesController, IBattleRoyaleController, IMapboxController, IBattlePassController, IGiftSystemController, IWOController
+from skeletons.gui.customization import ICustomizationService
+from skeletons.gui.game_control import IBattleRoyaleController, IBrowserController, IMapboxController, IRankedBattlesController
+from skeletons.gui.impl import INotificationWindowController
+from skeletons.gui.platform.wgnp_controllers import IWGNPSteamAccRequestController
 from skeletons.gui.web import IWebController
 from soft_exception import SoftException
-from skeletons.gui.customization import ICustomizationService
-from wo2022.wo_constants import WO_GOTO_AUCTION_ACTION
+from web.web_client_api import webApiCollection
+from web.web_client_api.sound import HangarSoundWebApi
 if typing.TYPE_CHECKING:
     from notification.NotificationsModel import NotificationsModel
     from gui.platform.wgnp.steam_account.statuses import SteamAccEmailStatus
@@ -869,7 +853,7 @@ class _OpenLootBoxesHandler(_NavigationDisabledActionHandler):
         notification = model.getNotification(self.getNotType(), entityID)
         savedData = notification.getSavedData()
         if savedData is not None:
-            showLootBox(lootBoxType=savedData)
+            pass
         return
 
 
@@ -886,8 +870,8 @@ class _LootBoxesAutoOpenHandler(_NavigationDisabledActionHandler):
     def doAction(self, model, entityID, action):
         notification = model.getNotification(self.getNotType(), entityID)
         savedData = notification.getSavedData()
-        if savedData is not None and 'rewards' in savedData and 'boxIDs' in savedData:
-            showLootBoxAutoOpenWindow(savedData['rewards'], savedData['boxIDs'])
+        if savedData is not None and 'rewards' in savedData:
+            pass
         return
 
 
@@ -916,24 +900,13 @@ class _OpenBattlePassProgressionView(_NavigationDisabledActionHandler):
         return ('openBattlePassProgressionView',)
 
     def doAction(self, model, entityID, action):
-        showMissionsBattlePassCommonProgression()
-
-
-class _OpenSelectDevicesHandler(_NavigationDisabledActionHandler):
-
-    @classmethod
-    def getNotType(cls):
-        return NOTIFICATION_TYPE.CHOOSING_DEVICES
-
-    @classmethod
-    def getActions(cls):
-        return ('openSelectDevices',)
-
-    def doAction(self, model, entityID, action):
         notification = model.getNotification(self.getNotType(), entityID)
         savedData = notification.getSavedData()
+        hideWebBrowserOverlay()
         if savedData is not None:
-            showOfferByBonusName(savedData.get('bonusName'))
+            showMissionsBattlePass(R.views.lobby.battle_pass.BattlePassProgressionsView(), savedData.get('chapterID'))
+        else:
+            showMissionsBattlePass()
         return
 
 
@@ -949,26 +922,6 @@ class _OpentBlueprintsConvertSale(_NavigationDisabledActionHandler):
 
     def doAction(self, model, entityID, action):
         showBlueprintsSalePage()
-
-
-class _OpenBattlePassStyleChoiceView(_NavigationDisabledActionHandler):
-    __settingsCore = dependency.descriptor(ISettingsCore)
-    __battlePassController = dependency.descriptor(IBattlePassController)
-
-    @classmethod
-    def getNotType(cls):
-        return NOTIFICATION_TYPE.MESSAGE
-
-    @classmethod
-    def getActions(cls):
-        return ('openBattlePassStyleChoiceView',)
-
-    def doAction(self, model, entityID, action):
-        isPaused = self.__battlePassController.isPaused()
-        if self.__settingsCore.serverSettings.getBPStorage().get(BattlePassStorageKeys.INTRO_SHOWN) and not isPaused:
-            showBattlePass3dStyleChoiceWindow()
-        else:
-            showMissionsBattlePassCommonProgression()
 
 
 class _OpenMapboxProgression(_NavigationDisabledActionHandler):
@@ -1015,8 +968,7 @@ class _OpenPsaShop(_NavigationDisabledActionHandler):
         showShop(getPlayerSeniorityAwardsUrl())
 
 
-class _NewYearOpenRewardsScreenHandler(_NavigationDisabledActionHandler):
-    _nyController = dependency.descriptor(INewYearController)
+class _OpenBattlePassPointsShop(_NavigationDisabledActionHandler):
 
     @classmethod
     def getNotType(cls):
@@ -1024,122 +976,17 @@ class _NewYearOpenRewardsScreenHandler(_NavigationDisabledActionHandler):
 
     @classmethod
     def getActions(cls):
-        return ('openRewardsScreen',)
+        return ('openBattlePassPointsShop',)
 
     def doAction(self, model, entityID, action):
-        switchNewYearView(AnchorNames.TREE, ViewAliases.REWARDS_VIEW)
-
-    def _canNavigate(self):
-        if not self._nyController.isEnabled():
-            BigWorld.callback(0.0, self.__showMessage)
-            return False
-        return super(_NewYearOpenRewardsScreenHandler, self)._canNavigate()
-
-    def __showMessage(self):
-        self._nyController.showStateMessage()
+        showShop(getBattlePassCoinProductsUrl())
 
 
-class _NewYearOpenLootBoxesViewHandler(_ActionHandler):
+class _OpenChapterChoiceView(_OpenBattlePassProgressionView):
 
     @classmethod
     def getNotType(cls):
-        return NOTIFICATION_TYPE.MESSAGE
-
-    @classmethod
-    def getActions(cls):
-        return ('openLootBoxesView',)
-
-    def handleAction(self, model, entityID, action):
-        notification = model.getNotification(self.getNotType(), entityID)
-        savedData = notification.getSavedData()
-        category = 'usual' if savedData is None else savedData.get('category', 'usual')
-        lootBoxType = NewYearLootBoxes.PREMIUM if category != 'usual' else NewYearLootBoxes.COMMON
-        showLootBox(lootBoxType=lootBoxType, category=category)
-        return
-
-
-class _OpenNewYearVehiclesViewHandler(_ActionHandler):
-
-    @classmethod
-    def getNotType(cls):
-        return NOTIFICATION_TYPE.MESSAGE
-
-    @classmethod
-    def getActions(cls):
-        return ('openNewYearVehiclesView',)
-
-    def handleAction(self, model, entityID, action):
-        super(_OpenNewYearVehiclesViewHandler, self).handleAction(model, entityID, action)
-        showNewYearVehiclesView()
-
-
-class _NewYearOpenSpecialBoxPopUpHandler(_ActionHandler):
-    __giftsController = dependency.descriptor(IGiftSystemController)
-    __itemsCache = dependency.descriptor(IItemsCache)
-
-    @classmethod
-    def getNotType(cls):
-        return NOTIFICATION_TYPE.MESSAGE
-
-    @classmethod
-    def getActions(cls):
-        return ('openNYSpecialLootBoxes',)
-
-    @decorators.process('updating')
-    def handleAction(self, model, entityID, action):
-        result, boxes = None, self.__itemsCache.items.tokens.getLootBoxes()
-        box = findFirst(lambda b: b.getType() == NewYearLootBoxes.SPECIAL, boxes.values())
-        if box is not None and box.getInventoryCount():
-            result = yield LootBoxOpenProcessor(box, 1).request()
-        eventHub = self.__giftsController.getEventHub(GiftEventID.NY_HOLIDAYS)
-        if result and result.success and eventHub is not None and not eventHub.getSettings().isDisabled:
-            showLootBoxSpecialMultiOpen(box, result.auxData['bonus'], result.auxData['giftsInfo'])
-        else:
-            errorText = backport.text(R.strings.ny.giftSystem.award.serverError())
-            SystemMessages.pushMessage(errorText, type=SystemMessages.SM_TYPE.GiftSystemError)
-        return
-
-
-class _NewYearOpenSpecialBoxEntryHandler(_NewYearOpenSpecialBoxPopUpHandler):
-
-    @classmethod
-    def getNotType(cls):
-        return NOTIFICATION_TYPE.NEW_YEAR_SPECIAL_LOOTBOXES
-
-
-class _NewYearCollectionCompleteHandler(_ActionHandler):
-
-    @classmethod
-    def getNotType(cls):
-        return NOTIFICATION_TYPE.MESSAGE
-
-    @classmethod
-    def getActions(cls):
-        return ('openCollectionRewards',)
-
-    def handleAction(self, model, entityID, action):
-        notification = model.getNotification(self.getNotType(), entityID)
-        savedData = notification.getSavedData()
-        if savedData is not None:
-            for bonuses in extractCollectionsRewards(savedData.get('completedCollectionsQuests', [])):
-                showNyCollectionCongratsWindow(bonuses)
-
-        return
-
-
-class _WinterOfferToAuctionHandler(_NavigationDisabledActionHandler):
-    __woController = dependency.descriptor(IWOController)
-
-    @classmethod
-    def getNotType(cls):
-        return NOTIFICATION_TYPE.MESSAGE
-
-    @classmethod
-    def getActions(cls):
-        return (WO_GOTO_AUCTION_ACTION,)
-
-    def doAction(self, model, entityID, action):
-        self.__woController.goToAuction()
+        return NOTIFICATION_TYPE.BATTLE_PASS_SWITCH_CHAPTER_REMINDER
 
 
 _AVAILABLE_HANDLERS = (ShowBattleResultsHandler,
@@ -1176,10 +1023,7 @@ _AVAILABLE_HANDLERS = (ShowBattleResultsHandler,
  _LootBoxesAutoOpenHandler,
  _OpenProgressiveRewardView,
  ProlongStyleRent,
- _NewYearOpenRewardsScreenHandler,
  _OpenBattlePassProgressionView,
- _OpenSelectDevicesHandler,
- _OpenBattlePassStyleChoiceView,
  _OpenMissingEventsHandler,
  _OpenNotrecruitedSysMessageHandler,
  _OpentBlueprintsConvertSale,
@@ -1187,13 +1031,8 @@ _AVAILABLE_HANDLERS = (ShowBattleResultsHandler,
  _OpenMapboxProgression,
  _OpenMapboxSurvey,
  _OpenPsaShop,
- _OpenMissingEventsHandler,
- _NewYearOpenLootBoxesViewHandler,
- _OpenNewYearVehiclesViewHandler,
- _NewYearOpenSpecialBoxPopUpHandler,
- _NewYearOpenSpecialBoxEntryHandler,
- _NewYearCollectionCompleteHandler,
- _WinterOfferToAuctionHandler)
+ _OpenBattlePassPointsShop,
+ _OpenChapterChoiceView)
 
 class NotificationsActionsHandlers(object):
     __slots__ = ('__single', '__multi')

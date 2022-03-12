@@ -15,12 +15,12 @@ _logger = logging.getLogger(__name__)
 class ViewSettings(typing.Generic[TViewModel]):
     __slots__ = ('__proxy', 'args', 'kwargs')
 
-    def __init__(self, layoutID, flags = ViewFlags.VIEW, model = None, args = (), kwargs = None):
+    def __init__(self, layoutID, flags = ViewFlags.VIEW, model = None, args = ()):
         super(ViewSettings, self).__init__()
         self.__proxy = PyObjectViewSettings(layoutID)
         self.__proxy.flags = flags
         self.args = args
-        self.kwargs = kwargs or {}
+        self.kwargs = {}
         if model is not None:
             self.__proxy.model = getProxy(model)
         return
@@ -144,16 +144,6 @@ class View(PyObjectEntity, typing.Generic[TViewModel]):
         else:
             return
 
-    def setHold(self, value):
-        if self.proxy is not None:
-            self.proxy.setHold(value)
-        return
-
-    def setHoldSwfs(self, value):
-        if self.proxy is not None:
-            self.proxy.setHoldSwfs(value)
-        return
-
     def getChildView(self, resourceID):
         if self.proxy is not None:
             return self.proxy.getChild(resourceID)
@@ -202,9 +192,6 @@ class View(PyObjectEntity, typing.Generic[TViewModel]):
 
     def createContextMenu(self, event):
         return None
-
-    def canBeClosed(self):
-        return True
 
     def _onLoading(self, *args, **kwargs):
         pass

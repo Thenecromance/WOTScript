@@ -16,6 +16,9 @@ class AmmunitionPanelInject(AmmunitionPanelInjectMeta, IGlobalListener):
     def onPrbEntitySwitched(self):
         self.getInjectView().update()
 
+    def onPlayerStateChanged(self, entity, roster, accountInfo):
+        self.getInjectView().update()
+
     def getOnPanelSectionSelected(self):
         return self.getInjectView().onPanelSectionSelected
 

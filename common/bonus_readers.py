@@ -1,23 +1,21 @@
 # Embedded file name: scripts/common/bonus_readers.py
-import calendar
 import time
-from functools import partial
 from typing import Union, TYPE_CHECKING
 import blueprints
 import dossiers2
 from dynamic_currencies import g_dynamicCurrenciesData
 import items
+import calendar
 from account_shared import validateCustomizationItem
 from battle_pass_common import NON_VEH_CD
 from blueprints.BlueprintTypes import BlueprintTypes
 from blueprints.FragmentTypes import isUniversalFragment
-from constants import DOSSIER_TYPE, IS_DEVELOPMENT, SEASON_TYPE_BY_NAME, EVENT_TYPE, INVOICE_LIMITS
 from dossiers2.custom.cache import getCache
 from invoices_helpers import checkAccountDossierOperation
-from items import vehicles, tankmen, utils, new_year, collectibles
+from items import vehicles, tankmen, utils
 from items.components.c11n_constants import SeasonType
 from items.components.crew_skins_constants import NO_CREW_SKIN_ID
-from items.components.ny_constants import YEARS_INFO, TOY_TYPE_IDS_BY_NAME, CurrentNYConstants, YEARS
+from constants import DOSSIER_TYPE, IS_DEVELOPMENT, SEASON_TYPE_BY_NAME, EVENT_TYPE, INVOICE_LIMITS
 from soft_exception import SoftException
 if TYPE_CHECKING:
     from ResMgr import DataSection
@@ -794,51 +792,6 @@ def __readMetaSection(bonus, _name, section, eventType, checkLimit):
         return
 
 
-def __readBonus_nyToy(bonus, _name, section, eventType, year, checkLimit):
-    if section.has_key('id'):
-        tid = section['id'].asInt
-        if year == YEARS_INFO.CURRENT_YEAR:
-            cache = new_year.g_cache.toys
-        else:
-            cache = collectibles.g_cache[YEARS.getYearStrFromYearNum(year)].toys
-        if tid not in cache:
-            raise SoftException('Unknown NY{} toyID: {}'.format(year, tid))
-        count = section['count'].asInt if section.has_key('count') else 0
-        pureCount = section['pureCount'].asInt if section.has_key('pureCount') else count
-        if pureCount > count:
-            raise SoftException('Pure count should be less or equal than count', pureCount, count)
-        toysCollectionKey = YEARS_INFO.getCollectionKeyForYear(year)
-        nyToys = bonus.setdefault(toysCollectionKey, {})
-        nyToys[tid] = {'count': count,
-         'pureCount': pureCount}
-
-
-def __readBonus_nyToyFragments(bonus, _name, section, eventType, checkLimit):
-    count = section.asInt
-    bonus[CurrentNYConstants.TOY_FRAGMENTS] = bonus.get(CurrentNYConstants.TOY_FRAGMENTS, 0) + count
-
-
-def __readBonus_nyAnyOf(bonus, _name, section, eventType, checkLimit):
-    if section.has_key('setting'):
-        settingID = YEARS_INFO.CURRENT_SETTING_IDS_BY_NAME[section.readString('setting')]
-    else:
-        settingID = -1
-    if section.has_key('type'):
-        typeID = TOY_TYPE_IDS_BY_NAME[section.readString('type')]
-    else:
-        typeID = -1
-    if section.has_key('rank'):
-        rank = section['rank'].asInt
-    else:
-        rank = -1
-    bonus.setdefault(CurrentNYConstants.ANY_OF, []).append((typeID, settingID, rank))
-
-
-def __readBonus_nyFillers(bonus, _name, section, eventType, checkLimit):
-    count = section.asInt
-    bonus[CurrentNYConstants.FILLERS] = bonus.get(CurrentNYConstants.FILLERS, 0) + count
-
-
 def __readBonus_optionalData(config, bonusReaders, section, eventType):
     limitIDs, bonus = __readBonusSubSection(config, bonusReaders, section, eventType)
     probabilityStageCount = config.get('probabilityStageCount', 1)
@@ -1062,15 +1015,7 @@ __BONUS_READERS = {'meta': __readMetaSection,
  'vehicleChoice': __readBonus_vehicleChoice,
  'blueprint': __readBonus_blueprint,
  'blueprintAny': __readBonus_blueprintAny,
- 'currency': __readBonus_currency,
- 'ny18Toy': partial(__readBonus_nyToy, year=YEARS.YEAR18),
- 'ny19Toy': partial(__readBonus_nyToy, year=YEARS.YEAR19),
- 'ny20Toy': partial(__readBonus_nyToy, year=YEARS.YEAR20),
- 'ny21Toy': partial(__readBonus_nyToy, year=YEARS.YEAR21),
- CurrentNYConstants.TOY_BONUS: partial(__readBonus_nyToy, year=YEARS_INFO.CURRENT_YEAR),
- CurrentNYConstants.TOY_FRAGMENTS: __readBonus_nyToyFragments,
- CurrentNYConstants.ANY_OF: __readBonus_nyAnyOf,
- CurrentNYConstants.FILLERS: __readBonus_nyFillers}
+ 'currency': __readBonus_currency}
 __PROBABILITY_READERS = {'optional': __readBonus_optional,
  'oneof': __readBonus_oneof,
  'group': __readBonus_group}
@@ -1161,7 +1106,7 @@ def __readBonusSubSection(config, bonusReaders, section, eventType = None, check
             if limitIDs:
                 resultLimitIDs.update(limitIDs)
         elif name in bonusReaders:
-            bonusReaders[name](bonus, name, subSection, eventType, checkLimit=checkLimit)
+            bonusReaders[name](bonus, name, subSection, eventType, checkLimit)
         elif name in _RESERVED_NAMES:
             pass
         else:

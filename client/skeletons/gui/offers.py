@@ -1,7 +1,10 @@
 # Embedded file name: scripts/client/skeletons/gui/offers.py
-import adisp
-from Event import Event
+import typing
 from skeletons.gui import INovelty
+if typing.TYPE_CHECKING:
+    from typing import Callable, Dict, Iterable, Optional, Union
+    from account_helpers.offers.events_data import OfferEventData
+    from Event import Event
 
 class IOffersNovelty(INovelty):
 
@@ -52,7 +55,6 @@ class IOffersDataProvider(object):
     def isBannerSeen(self, offerID):
         raise NotImplementedError
 
-    @adisp.async
     def isCdnResourcesReady(self, callback = None, timeout = 0):
         raise NotImplementedError
 
@@ -75,4 +77,7 @@ class IOffersDataProvider(object):
         raise NotImplementedError
 
     def isOfferAvailable(self, tokenID):
+        raise NotImplementedError
+
+    def getAmountOfGiftsGenerated(self, tokenID, mainTokenCount):
         raise NotImplementedError

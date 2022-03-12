@@ -2,6 +2,10 @@
 from collections import namedtuple
 import random
 
+class CgfTankNodes(object):
+    TANK_ROOT = 'Tank.Root'
+
+
 class ModelStates(object):
     UNDAMAGED = 'undamaged'
     DESTROYED = 'destroyed'

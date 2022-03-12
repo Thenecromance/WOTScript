@@ -1,7 +1,6 @@
 # Embedded file name: scripts/client/frameworks/state_machine/machine.py
 import logging
 import operator
-import typing
 from . import states as _states
 from . import validator
 from . import visitor
@@ -60,13 +59,6 @@ class StateMachine(_states.State):
 
         return False
 
-    def isAnyStateEntered(self, stateIDs):
-        for state in self.__entered:
-            if state.getStateID() in stateIDs:
-                return True
-
-        return False
-
     def isRunning(self):
         return self.__isRunning
 
@@ -102,7 +94,7 @@ class StateMachine(_states.State):
         _logger.debug('%r: Snapshot before exiting states = %r', self, self.__entered)
         exited = self.__exit(transitions)
         _logger.debug('%r: Snapshot after exiting states = %r', self, self.__entered)
-        entered = self.__enter(transitions, event)
+        entered = self.__enter(transitions)
         self.__notify(exited, False, event)
         self.__notify(entered, True, event)
         for state in self.__entered:
@@ -168,7 +160,7 @@ class StateMachine(_states.State):
 
         return result
 
-    def __enter(self, transitions, event = None):
+    def __enter(self, transitions):
         result = []
         for transition in transitions:
             self.__collect(transition, result)
@@ -177,7 +169,7 @@ class StateMachine(_states.State):
         for state in result:
             self.__entered.append(state)
             _logger.debug('%r: %r is entering', self, state)
-            state.enter(event)
+            state.enter()
 
         return result
 

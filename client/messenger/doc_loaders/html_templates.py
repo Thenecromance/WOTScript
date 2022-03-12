@@ -42,8 +42,6 @@ class MessageTemplates(templates.XMLCollection):
             formatted['bgIcon'] = source[bgIconSource]
         else:
             formatted['bgIcon'] = source.get(None, '')
-        if formatted.get('type') == 'nyBoxes' and 'savedData' in formatted:
-            formatted['nyData'] = formatted['savedData']
         return formatted
 
     def priority(self, key):
@@ -61,15 +59,12 @@ class MessageTemplates(templates.XMLCollection):
         data = {'type': source.readString('type'),
          'timestamp': -1,
          'savedData': None,
-         'nyData': None,
          'bgIcon': self._makeBgIconsData(source['bgIcon']),
          'bgIconSizeAuto': source.readBool('bgIconSizeAuto'),
          'icon': source.readString('icon'),
          'defaultIcon': source.readString('defaultIcon'),
          'filters': [],
-         'buttonsStates': {},
-         'buttonsLayout': [],
-         'buttonsAlign': source.readString('buttonsAlign', default='left')}
+         'buttonsLayout': []}
         priority = source.readString('priority', NotificationPriorityLevel.MEDIUM)
         if priority not in NotificationPriorityLevel.RANGE:
             LOG_WARNING('Priority is invalid', sourceID, priority)

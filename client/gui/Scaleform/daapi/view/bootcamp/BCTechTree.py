@@ -10,6 +10,10 @@ from nations import NAMES as NATION_NAMES
 
 class BCTechTree(TechTree):
 
+    def _populate(self):
+        super(BCTechTree, self)._populate()
+        self.__populateAfter()
+
     def invalidateBlueprintMode(self, isEnabled):
         pass
 
@@ -37,7 +41,10 @@ class BCTechTree(TechTree):
                     node['vehCompareTreeNodeData']['modeAvailable'] = False
                 nodeState = node['state']
                 if not NODE_STATE.inInventory(nodeState):
+                    isUnlocked = NODE_STATE.isUnlocked(nodeState)
                     node['state'] = NODE_STATE_FLAGS.LOCKED
+                    if isUnlocked:
+                        node['state'] |= NODE_STATE_FLAGS.PURCHASE_DISABLED
                     if NODE_STATE.isAnnouncement(nodeState):
                         node['state'] |= NODE_STATE_FLAGS.ANNOUNCEMENT
                         node['state'] |= NODE_STATE_FLAGS.NOT_CLICKABLE
@@ -48,7 +55,7 @@ class BCTechTree(TechTree):
     def setupContextHints(self, hintID):
         pass
 
-    def _populateAfter(self):
+    def __populateAfter(self):
         self.as_hideNationsBarS(True)
         self.as_setBlueprintsSwitchButtonStateS(enabled=False, selected=False, tooltip='', visible=False)
         self.as_setVehicleCollectorStateS(enabled=False)

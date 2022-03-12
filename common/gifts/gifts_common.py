@@ -13,8 +13,7 @@ class ClientReqStrategy(object):
 class GiftEventID(object):
     UNKNOWN = 0
     DEV_TEST = 1
-    NY_HOLIDAYS = 2
-    ALL = (UNKNOWN, NY_HOLIDAYS) + ((DEV_TEST,) if IS_DEVELOPMENT else ())
+    ALL = (UNKNOWN,) + ((DEV_TEST,) if IS_DEVELOPMENT else ())
 
 
 class GiftEventState(object):

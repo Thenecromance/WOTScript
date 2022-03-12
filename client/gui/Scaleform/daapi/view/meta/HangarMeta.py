@@ -85,10 +85,6 @@ class HangarMeta(View):
         if self._isDAAPIInited():
             return self.flashObject.as_setNotificationEnabled(value)
 
-    def as_setLootboxesVisibleS(self, value):
-        if self._isDAAPIInited():
-            return self.flashObject.as_setLootboxesVisible(value)
-
     def as_createDQWidgetS(self):
         if self._isDAAPIInited():
             return self.flashObject.as_createDQWidget()

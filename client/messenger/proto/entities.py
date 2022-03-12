@@ -459,9 +459,6 @@ class UserEntity(ChatEntity):
     def isMuted(self):
         return USER_TAG.MUTED in self.getTags()
 
-    def isAnySub(self):
-        return self.isFriend()
-
     def isCurrentPlayer(self):
         return False
 

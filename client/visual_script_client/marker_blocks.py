@@ -2,8 +2,8 @@
 from visual_script.block import Block, Meta
 from visual_script.slot_types import SLOT_TYPE
 from visual_script.misc import ASPECT
-from constants import IS_EDITOR
-if not IS_EDITOR:
+from constants import IS_VS_EDITOR
+if not IS_VS_EDITOR:
     from HintManager import HintManager
 
 class MarkerMeta(Meta):
@@ -34,7 +34,7 @@ class ShowMarker(Block, MarkerMeta):
         self._out = self._makeEventOutputSlot('out')
 
     def __onShow(self):
-        if not IS_EDITOR:
+        if not IS_VS_EDITOR:
             marker = self._marker.getValue()
             if marker:
                 HintManager.hintManager().addMarker(marker)
@@ -51,7 +51,7 @@ class HideMarker(Block, MarkerMeta):
         self._out = self._makeEventOutputSlot('out')
 
     def __onHide(self):
-        if not IS_EDITOR:
+        if not IS_VS_EDITOR:
             marker = self._marker.getValue()
             if marker:
                 HintManager.hintManager().hideMarker(marker)
@@ -66,7 +66,7 @@ class IsMarkerVisible(Block, MarkerMeta):
         self._visible = self._makeDataOutputSlot('visible', SLOT_TYPE.BOOL, self._isVisible)
 
     def _isVisible(self):
-        if not IS_EDITOR:
+        if not IS_VS_EDITOR:
             marker = self._marker.getValue()
             if marker:
                 visible = HintManager.hintManager().isMarkerVisible(marker)

@@ -2,7 +2,7 @@
 import weakref
 from typing import List
 import BigWorld
-from constants import IS_EDITOR, ARENA_PERIOD, ARENA_PERIOD_NAMES
+from constants import IS_VS_EDITOR, ARENA_PERIOD, ARENA_PERIOD_NAMES
 from visual_script.block import Block, InitParam
 from visual_script.dependency import dependencyImporter
 from visual_script.misc import ASPECT, errorVScript
@@ -91,7 +91,7 @@ class OnCaptureControlPoint(TunableEventBlock, ArenaMeta):
 
     @property
     def arena(self):
-        if not IS_EDITOR:
+        if not IS_VS_EDITOR:
             return getattr(BigWorld.player(), 'arena')
         else:
             return None
@@ -320,7 +320,7 @@ class GetArenaBorders(Block, ArenaMeta):
         super(GetArenaBorders, self).__init__(*args, **kwargs)
         self._min = self._makeDataOutputSlot('min', SLOT_TYPE.VECTOR2, None)
         self._max = self._makeDataOutputSlot('max', SLOT_TYPE.VECTOR2, None)
-        if not IS_EDITOR:
+        if not IS_VS_EDITOR:
             bbox = self._arena.arenaType.boundingBox
             self._min.setValue((bbox[0][0], bbox[0][1]))
             self._max.setValue((bbox[1][0], bbox[1][1]))
